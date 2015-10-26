@@ -37,7 +37,18 @@ fitFlexCoDE(xTrain, zTrain, xValidation, zValidation, xTest = NULL,
 \item{verbose}{Should we print what we are doing? Default is TRUE.}
 }
 \value{
-Returns the fitted estimated conditional density, and object of the class FlexCoDE
+Returns the fitted estimated conditional density, and object of the class FlexCoDE. The return value is an object with the following components:
+\item{zMin, zMax}{Minimum and maximum value of z}
+\item{nIMax}{Maximum number of expansion coefficients (user input)}
+\item{system}{Basis used for expanding the response}
+\item{zTrain}{zTrain (user input)}
+\item{xTrain}{xTrain (user input)}
+\item{regressionObject}{Object with fitted regressions. Class and content depend on which regression method was chosen by user}
+\item{errors}{Estimated errors for each value of I (number of expansion coefficients) using validation set}
+\item{bestI}{Optimal number of I according to validation set}
+\item{bestError}{Estimated error of model with bestI expansion terms according to validation set}
+\item{bestDelta}{Optimal value of threshold delta according to validation set}
+\item{estimatedRisk}{(If user provides xTest and zTest) Estimated risk (error) according to test set)}
 }
 \description{
 FlexCoDE Fit Conditional Density Estimation via Regression

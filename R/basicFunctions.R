@@ -14,7 +14,19 @@
 #' @param deltaGrid Grid of threshold deltas (betwen 0 and 0.5). Default value is seq(0,0.4,0.05).
 #' @param verbose Should we print what we are doing? Default is TRUE.
 #'
-#' @return Returns the fitted estimated conditional density, and object of the class FlexCoDE
+#' @return Returns the fitted estimated conditional density, and object of the class FlexCoDE. The return value is an object with the following components:
+#' \item{zMin, zMax}{Minimum and maximum value of z}
+#' \item{nIMax}{Maximum number of expansion coefficients (user input)}
+#' \item{system}{Basis used for expanding the response}
+#' \item{zTrain}{zTrain (user input)}
+#' \item{xTrain}{xTrain (user input)}
+#' \item{regressionObject}{Object with fitted regressions. Class and content depend on which regression method was chosen by user}
+#' \item{errors}{Estimated errors for each value of I (number of expansion coefficients) using validation set}
+#' \item{bestI}{Optimal number of I according to validation set}
+#' \item{bestError}{Estimated error of model with bestI expansion terms according to validation set}
+#' \item{bestDelta}{Optimal value of threshold delta according to validation set}
+#' \item{estimatedRisk}{(If user provides xTest and zTest) Estimated risk (error) according to test set)}
+#'
 #' @export
 fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,nIMax=length(zTrain),regressionFunction,regressionFunction.extra=NULL,system="Fourier",deltaGrid=seq(0,0.4,0.05),chooseDelta=TRUE,verbose=TRUE)
 {
