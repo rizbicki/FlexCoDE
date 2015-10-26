@@ -2,11 +2,12 @@
 % Please edit documentation in R/basicFunctions.R
 \name{fitFlexCoDE}
 \alias{fitFlexCoDE}
-\title{Title}
+\title{FlexCoDE Fit Conditional Density Estimation via Regression}
 \usage{
-fitFlexCoDE(xTrain, zTrain, xValidation, zValidation, nIMax = length(zTrain),
-  regressionFunction, regressionFunction.extra = NULL, system = "Fourier",
-  deltaGrid = seq(0, 0.4, 0.05), chooseDelta = TRUE, verbose = TRUE)
+fitFlexCoDE(xTrain, zTrain, xValidation, zValidation, xTest = NULL,
+  zTest = NULL, nIMax = length(zTrain), regressionFunction,
+  regressionFunction.extra = NULL, system = "Fourier", deltaGrid = seq(0,
+  0.4, 0.05), chooseDelta = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{xTrain}{Covariates x used to train the model (one observation per row)}
@@ -16,6 +17,10 @@ fitFlexCoDE(xTrain, zTrain, xValidation, zValidation, nIMax = length(zTrain),
 \item{xValidation}{Covariates x used to tune the model (one observation per row; same number of columns as xTrain)}
 
 \item{zValidation}{Responses z used to tune the model  (matrix with one column; one observation per row)}
+
+\item{xTest}{Covariates x used to estimate risk of final model (one observation per row; same number of columns as xTrain). Default is NULL}
+
+\item{zTest}{Responses z used to estimate risk of final model  (matrix with one column; one observation per row). Default is NULL}
 
 \item{nIMax}{Maximum possible number of components of the series expansion (that is, the function will find the best I<nIMax). Default is 100}
 
@@ -35,6 +40,6 @@ fitFlexCoDE(xTrain, zTrain, xValidation, zValidation, nIMax = length(zTrain),
 Returns the fitted estimated conditional density, and object of the class FlexCoDE
 }
 \description{
-Title
+FlexCoDE Fit Conditional Density Estimation via Regression
 }
 

@@ -1,9 +1,11 @@
-#' Title
+#' FlexCoDE Fit Conditional Density Estimation via Regression
 #'
 #' @param xTrain Covariates x used to train the model (one observation per row)
 #' @param zTrain Responses z used to train the model  (matrix with one column; one observation per row)
 #' @param xValidation Covariates x used to tune the model (one observation per row; same number of columns as xTrain)
 #' @param zValidation Responses z used to tune the model  (matrix with one column; one observation per row)
+#' @param xTest Covariates x used to estimate risk of final model (one observation per row; same number of columns as xTrain). Default is NULL
+#' @param zTest Responses z used to estimate risk of final model  (matrix with one column; one observation per row). Default is NULL
 #' @param nIMax Maximum possible number of components of the series expansion (that is, the function will find the best I<nIMax). Default is 100
 #' @param regressionFunction a function indicating which regression method will be used to estimate the expansion coefficients. Currently can be one of
 #' @param regressionFunction.extra extra parameters to be sent to regression function; see the regression you want to use to check what are the available parameters
@@ -14,7 +16,7 @@
 #'
 #' @return Returns the fitted estimated conditional density, and object of the class FlexCoDE
 #' @export
-fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,nIMax=length(zTrain),regressionFunction,regressionFunction.extra=NULL,system="Fourier",deltaGrid=seq(0,0.4,0.05),chooseDelta=TRUE,verbose=TRUE)
+fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,nIMax=length(zTrain),regressionFunction,regressionFunction.extra=NULL,system="Fourier",deltaGrid=seq(0,0.4,0.05),chooseDelta=TRUE,verbose=TRUE)
 {
   objectCDE=NULL
   objectCDE$zMax=max(zTrain)
@@ -53,6 +55,16 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,nIMax=length(zTrain),
   if(verbose) print("Choosing optimal cutoff Delta")
   delta=chooseDelta(objectCDE, xValidation,zValidation,deltaGrid)
   objectCDE$bestDelta=delta
+
+  if(!is.null(xTest)&!is.null(zTest))
+  {
+    if(verbose) print("Estimating risk on test set")
+    error=estimateErrorFlexCoDE(objectCDE,xTest,zTest,se=TRUE)
+    objectCDE$estimatedRisk=error
+  }
+
+  if(objectCDE$bestI==objectCDE$nIMax)
+    warning("bestI=nIMax, try increasin nIMax if you want to improve performance")
 
   return(objectCDE)
 }
@@ -117,7 +129,7 @@ estimateErrorFlexCoDE=function(objectCDE=objectCDE,xTest,zTest,se=TRUE)
   output=NULL
   output$mean=1/2*sSquare-likeli
 
-  boot=5000
+  boot=1000
   meanBoot=apply(as.matrix(1:boot),1,function(xx){
     sampleBoot=sample(1:n,replace=T)
 
@@ -151,8 +163,10 @@ estimateErrorFlexCoDE=function(objectCDE=objectCDE,xTest,zTest,se=TRUE)
 #' \item{CDE }{Matrix with value of the density at points z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
 #' @export
 #'
-predictFlexCoDE=function(objectCDE,xNew,B=1000)
+predict.FlexCoDE=function(objectCDE,xNew,B=1000)
 {
+  if(class(objectCDE)!="FlexCoDE")
+    stop("Object should be of type FlexCoDE")
   zGrid=seq(from=0,to=1,length.out=B)
 
   if(is.null(objectCDE$bestI))
@@ -175,5 +189,28 @@ predictFlexCoDE=function(objectCDE,xNew,B=1000)
   returnValue=NULL
   returnValue$CDE=estimates
   returnValue$z=seq(from=objectCDE$zMin,to=objectCDE$zMax,length.out=B)
+
+
   return(returnValue)
+}
+
+#' Print object of classe FlexCoDE
+#'
+#' @param objectCDE Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand
+#'
+#' @return returns information regarding the fitted model
+#' @export
+#'
+print.FlexCoDE=function(objectCDE)
+{
+  if(class(objectCDE)!="FlexCoDE")
+    stop("Object should be of class FlexCoDE")
+  cat("FlexCoDE - Flexible Conditional Density Estimator \n \n")
+  cat(paste("Regression Method Used:",class(objectCDE$regressionObject)),"\n")
+
+  cat(paste("Best Number of Expansion Coefficients Sected:",(objectCDE$bestI)),"\n")
+
+  cat(paste("Basis used:",objectCDE$system,"\n"))
+
+  if(!is.null(objectCDE$estimatedRisk)) cat(paste("Estimated risk on validation set: ",objectCDE$estimatedRisk$mean," (",objectCDE$estimatedRisk$seBoot,")","\n",sep=""))
 }

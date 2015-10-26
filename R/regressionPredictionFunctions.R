@@ -63,3 +63,81 @@ predict.SpAM=function(object,xNew,maxTerms=NULL)
   return(predictedValidation)
 
 }
+
+
+predict.Series=function(object,xNew,maxTerms=NULL)
+{
+  if(class(object)!="Series")
+    stop("Object has wrong class, should be Series")
+
+  distanceNewTrain=fields::rdist(xNew,object$xTrain)
+  kernelNewOld=exp(-distanceNewTrain^2/(4*object$bestEps))
+
+  if(!is.null(maxTerms))
+  {
+    maxTerms=min(maxTerms,length(object$bestNX))
+  } else {
+    maxTerms=length(object$bestNX)
+  }
+
+
+  m=dim(kernelNewOld)[1] # New
+  n=dim(kernelNewOld)[2] # Old
+  basisX=kernelNewOld %*% object$basisX[,1:object$nXMax,drop=FALSE]
+  basisX=1/n*basisX*matrix(rep(1/object$eigenValues[1:object$nXMax],m),m,object$nXMax,byrow=T)
+
+  predictedValidation=matrix(NA,nrow(distanceNewTrain),maxTerms)
+  for(kk in 1:maxTerms)
+  {
+    #predictedValidation[,kk]=basisX[,1:object$bestNX[kk],drop=F]%*%object$coefficientsMatrix[kk,1:object$bestNX[kk],drop=F]
+    predictedValidation[,kk]=object$coefficientsMatrix[kk,1:object$bestNX[kk],drop=F]%*%t(basisX[,1:object$bestNX[kk],drop=F])
+  }
+
+  gc(verbose = FALSE)
+  return(predictedValidation)
+}
+
+
+
+predict.Lasso=function(object,xNew,maxTerms=NULL)
+{
+  if(class(object)!="Lasso")
+    stop("Object has wrong class, should be Lasso")
+
+  if(!is.null(maxTerms))
+  {
+    maxTerms=min(maxTerms,ncol(object$coefficients))
+  } else {
+    maxTerms=ncol(object$coefficients)
+  }
+
+
+  predictedValidation=xNew%*%object$coefficients[-1,1:maxTerms,drop=FALSE]
+  predictedValidation=predictedValidation+matrix(object$coefficients[1,1:maxTerms,drop=FALSE],nrow(predictedValidation),ncol(predictedValidation),byrow = TRUE)
+
+  return(predictedValidation)
+}
+
+
+predict.Forest=function(object,xNew,maxTerms=NULL)
+{
+  if(class(object)!="Forest")
+    stop("Object has wrong class, should be Forest")
+
+  if(!is.null(maxTerms))
+  {
+    maxTerms=min(maxTerms,length(object$fittedReg))
+  } else {
+    maxTerms=length(object$fittedReg)
+  }
+
+  predictedValidation=apply(as.matrix(1:maxTerms),1,function(xx)
+  {
+    predicted = predict(object$fittedReg[[xx]]$fit,newdata=xNew)
+    return(predicted)
+  })
+
+  return(predictedValidation)
+}
+
+
