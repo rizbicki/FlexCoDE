@@ -1,3 +1,12 @@
+#' Title
+#'
+#' @param object
+#' @param xNew
+#' @param maxTerms
+#'
+#' @return x
+#' @export
+#'
 predict.NN=function(object,xNew,maxTerms=NULL)
 {
   if(class(object)!="NN")
@@ -28,6 +37,15 @@ predict.NN=function(object,xNew,maxTerms=NULL)
   return(predictedValidation)
 }
 
+#' Title
+#'
+#' @param object
+#' @param xNew
+#' @param maxTerms
+#'
+#' @return x
+#' @export
+#'
 predict.SpAM=function(object,xNew,maxTerms=NULL)
 {
   if(class(object)!="SpAM")
@@ -65,6 +83,15 @@ predict.SpAM=function(object,xNew,maxTerms=NULL)
 }
 
 
+#' Title
+#'
+#' @param object
+#' @param xNew
+#' @param maxTerms
+#'
+#' @return x
+#' @export
+#'
 predict.Series=function(object,xNew,maxTerms=NULL)
 {
   if(class(object)!="Series")
@@ -99,6 +126,15 @@ predict.Series=function(object,xNew,maxTerms=NULL)
 
 
 
+#' Title
+#'
+#' @param object
+#' @param xNew
+#' @param maxTerms
+#'
+#' @return x
+#' @export
+#'
 predict.Lasso=function(object,xNew,maxTerms=NULL)
 {
   if(class(object)!="Lasso")
@@ -119,6 +155,15 @@ predict.Lasso=function(object,xNew,maxTerms=NULL)
 }
 
 
+#' Title
+#'
+#' @param object
+#' @param xNew
+#' @param maxTerms
+#'
+#' @return x
+#' @export
+#'
 predict.Forest=function(object,xNew,maxTerms=NULL)
 {
   if(class(object)!="Forest")

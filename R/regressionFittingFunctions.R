@@ -1,3 +1,12 @@
+
+#' Title
+#'
+#' @param x
+#' @param responses
+#' @param extra
+#'
+#' @return x
+#' @export
 regressionFunction.NN=function(x,responses,extra=NULL)
 {
   # Both x and responses are matrices
@@ -42,6 +51,15 @@ regressionFunction.NN=function(x,responses,extra=NULL)
   return(regressionObject)
 }
 
+#' Title
+#'
+#' @param x
+#' @param responses
+#' @param extra
+#'
+#' @return x
+#' @export
+#'
 regressionFunction.SpAM=function(x,responses,extra=NULL)
 {
   # Both x and responses are matrices
@@ -97,6 +115,15 @@ regressionFunction.SpAM=function(x,responses,extra=NULL)
   return(regressionObject)
 }
 
+#' Title
+#'
+#' @param x
+#' @param responses
+#' @param extra
+#'
+#' @return X
+#' @export
+#'
 regressionFunction.Series=function(x,responses,extra=NULL)
 {
   # Both x and responses are matrices
@@ -213,6 +240,15 @@ regressionFunction.Series=function(x,responses,extra=NULL)
 }
 
 
+#' Title
+#'
+#' @param x
+#' @param responses
+#' @param extra
+#'
+#' @return x
+#' @export
+#'
 regressionFunction.Lasso=function(x,responses,extra=NULL)
 {
   # Both x and responses are matrices
@@ -232,8 +268,18 @@ regressionFunction.Lasso=function(x,responses,extra=NULL)
 }
 
 
+#' Title
+#'
+#' @param x
+#' @param responses
+#' @param extra
+#'
+#' @return x
+#' @export
+#'
 regressionFunction.Forest=function(x,responses,extra=NULL)
 {
+
   # Both x and responses are matrices
   n=dim(x)[1]
   random=sample(1:n)

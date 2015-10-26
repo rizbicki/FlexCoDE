@@ -16,7 +16,7 @@
 #'
 #' @return Returns the fitted estimated conditional density, and object of the class FlexCoDE. The return value is an object with the following components:
 #' \item{zMin, zMax}{Minimum and maximum value of z}
-#' \item{nIMax}{Maximum number of expansion coefficients (user input)}
+#' \item{nIMax}{Maximum number of expansion coefficients (user input). Default is minimum between 25 and number of training samples.}
 #' \item{system}{Basis used for expanding the response}
 #' \item{zTrain}{zTrain (user input)}
 #' \item{xTrain}{xTrain (user input)}
@@ -27,8 +27,11 @@
 #' \item{bestDelta}{Optimal value of threshold delta according to validation set}
 #' \item{estimatedRisk}{(If user provides xTest and zTest) Estimated risk (error) according to test set)}
 #'
+#' @example ../testPackage.R
+#'
+#'
 #' @export
-fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,nIMax=length(zTrain),regressionFunction,regressionFunction.extra=NULL,system="Fourier",deltaGrid=seq(0,0.4,0.05),chooseDelta=TRUE,verbose=TRUE)
+fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,system="Fourier",deltaGrid=seq(0,0.4,0.05),chooseDelta=TRUE,verbose=TRUE)
 {
   objectCDE=NULL
   objectCDE$zMax=max(zTrain)
@@ -76,7 +79,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   }
 
   if(objectCDE$bestI==objectCDE$nIMax)
-    warning("bestI=nIMax, try increasin nIMax if you want to improve performance")
+    warning("bestI=nIMax, try increasing nIMax if you want to improve performance")
 
   return(objectCDE)
 }
@@ -122,7 +125,7 @@ estimateErrorFlexCoDE=function(objectCDE=objectCDE,xTest,zTest,se=TRUE)
 {
   zGrid=seq(objectCDE$zMin[1],objectCDE$zMax[1],length.out=500)
 
-  predictedComplete=predictFlexCoDE(objectCDE,xNew = xTest,B=length(zGrid))
+  predictedComplete=predict(objectCDE,xNew = xTest,B=length(zGrid))
   predictedComplete=predictedComplete$CDE*(objectCDE$zMax-objectCDE$zMin)
 
   colmeansComplete=colMeans(predictedComplete^2)
@@ -225,4 +228,7 @@ print.FlexCoDE=function(objectCDE)
   cat(paste("Basis used:",objectCDE$system,"\n"))
 
   if(!is.null(objectCDE$estimatedRisk)) cat(paste("Estimated risk on validation set: ",objectCDE$estimatedRisk$mean," (",objectCDE$estimatedRisk$seBoot,")","\n",sep=""))
+
+  print(objectCDE$regressionObject)
+
 }
