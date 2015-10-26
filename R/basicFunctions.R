@@ -83,13 +83,15 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   return(objectCDE)
 }
 
-#' Title Choose threshold value
+#' Choose threshold value to remove spurius bumps
 #'
-#' @param objectCDE An object of the class FlexCoDE with a fitted CDE, typically fitted used fitFlexCoDE beforehand
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
+#'
+#' @param objectCDE An object of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand
 #' @param xValidation Covariates x used to validate (tune) the model (one x observation per row).
 #' @param zValidation Responses z used to validate (tune) the model  (matrix with 1 column). Each row corresponds to a row of the xValidation argument
 #'
-#' @return Best Delta
+#' @return Best delta
 chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.05))
 {
   if(class(objectCDE)!='FlexCoDE')
@@ -112,7 +114,7 @@ chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.
 
 #' Estimate error (risk) of FlexCoDE object via test set
 #'
-#' @param objectCDE is an object of the class FlexCoDE
+#' @param objectCDE is an object of the class FlexCoDEtypically typically fitted used \code{\link{fitFlexCoDE}} beforehand
 #' @param xTest Covariates x of the sample used to test the model (one observation per row)
 #' @param zTest Response z of the sample used to test the model (one observation per row)
 #' @param se Should standard error be computed? Default is TRUE
@@ -219,7 +221,8 @@ print.FlexCoDE=function(objectCDE)
 {
   if(class(objectCDE)!="FlexCoDE")
     stop("Object should be of class FlexCoDE")
-  cat("FlexCoDE - Flexible Conditional Density Estimator \n \n")
+  cat("FlexCoDE - Flexible Conditional Density Estimator \n \n \n")
+  cat("####### Caracteristic of the fitted CDE:\n\n")
   cat(paste("Regression Method Used:",class(objectCDE$regressionObject)),"\n")
 
   cat(paste("Best Number of Expansion Coefficients Sected:",(objectCDE$bestI)),"\n")
@@ -229,6 +232,7 @@ print.FlexCoDE=function(objectCDE)
   if(!is.null(objectCDE$estimatedRisk)) cat(paste("Estimated risk on test set: ",objectCDE$estimatedRisk$mean," (se: ",objectCDE$estimatedRisk$seBoot,")","\n",sep=""))
 
   cat("\n")
+  cat("####### Caracteristic of the fitted regression:\n\n")
   print(objectCDE$regressionObject,bestI=objectCDE$bestI)
 
 }

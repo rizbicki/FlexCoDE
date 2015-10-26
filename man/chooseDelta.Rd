@@ -2,22 +2,22 @@
 % Please edit documentation in R/basicFunctions.R
 \name{chooseDelta}
 \alias{chooseDelta}
-\title{Title Choose threshold value}
+\title{Choose threshold value to remove spurius bumps}
 \usage{
 chooseDelta(objectCDE, xValidation, zValidation, deltaGrid = seq(0, 0.4,
   0.05))
 }
 \arguments{
-\item{objectCDE}{An object of the class FlexCoDE with a fitted CDE, typically fitted used fitFlexCoDE beforehand}
+\item{objectCDE}{An object of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand}
 
 \item{xValidation}{Covariates x used to validate (tune) the model (one x observation per row).}
 
 \item{zValidation}{Responses z used to validate (tune) the model  (matrix with 1 column). Each row corresponds to a row of the xValidation argument}
 }
 \value{
-Best Delta
+Best delta
 }
 \description{
-Title Choose threshold value
+This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 }
 

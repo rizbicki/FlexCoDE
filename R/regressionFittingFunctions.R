@@ -1,10 +1,12 @@
-#' Title
+#' Nearest Neighbors Regression
 #'
-#' @param x
-#' @param responses
-#' @param extra
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @return x
+#' @param x matrix with covariates that will be used for training
+#' @param responses matrix where each column is a response for the training data
+#' @param extra list with one component named nNeighVec, which contains a vetor with different number of neighbors; the function will choose the best value among them
+#'
+#' @return object of the class NN containing information need to perform prediction on new points
 #' @export
 regressionFunction.NN=function(x,responses,extra=NULL)
 {
@@ -50,12 +52,15 @@ regressionFunction.NN=function(x,responses,extra=NULL)
   return(regressionObject)
 }
 
-#' Title
+#' Print function for object of the class NN
 #'
-#' @param regressionObject
-#' @param bestI
+#' This function is typically not directly used by the user; it is used inside  \code{\link{print.FlexCoDE}}, the print
+#' method for the class FlexCoDE
 #'
-#' @return x
+#' @param regressionObject of the class NN
+#' @param bestI optimal number of expansion coefficients
+#'
+#' @return prints characteristics of the regressions that were fitted
 #' @export
 #'
 print.NN=function(regressionObject,bestI)
@@ -63,15 +68,16 @@ print.NN=function(regressionObject,bestI)
   cat(paste("Number of neighbors chosen for each fitted regression:",paste(regressionObject$bestNN[1:bestI],collapse=", "),"\n"))
 }
 
-#' Title
+#' SpAM Regression (Sparse Additive Model)
 #'
-#' @param x
-#' @param responses
-#' @param extra
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @return x
+#' @param x matrix with covariates that will be used for training
+#' @param responses matrix where each column is a response for the training data
+#' @param extra list with one component named sVec, which contains a vetor with different number of splins; the function will choose the best value among them
+#'
+#' @return object of the class SpAM containing information needed to perform prediction on new points
 #' @export
-#'
 regressionFunction.SpAM=function(x,responses,extra=NULL)
 {
   # Both x and responses are matrices
@@ -128,12 +134,15 @@ regressionFunction.SpAM=function(x,responses,extra=NULL)
 }
 
 
-#' Title
+#' Print function for object of the class SpAM
 #'
-#' @param regressionObject
-#' @param bestI
+#' This function is typically not directly used by the user; it is used inside  \code{\link{print.FlexCoDE}}, the print
+#' method for the class FlexCoDE
 #'
-#' @return x
+#' @param regressionObject of the class SpAM
+#' @param bestI optimal number of expansion coefficients
+#'
+#' @return prints characteristics of the regressions that were fitted
 #' @export
 #'
 print.SpAM=function(regressionObject,bestI)
@@ -157,15 +166,16 @@ print.SpAM=function(regressionObject,bestI)
 }
 
 
-#' Title
+#' Spectral Series Regression
 #'
-#' @param x
-#' @param responses
-#' @param extra
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @return X
+#' @param x matrix with covariates that will be used for training
+#' @param responses matrix where each column is a response for the training data
+#' @param extra list with two components: the first is named epsGrid, which contains a vetor with different number of bandwidths to be used in the gaussian kernel; the function will choose the best value among them; the second is called nXMax and contains a single integer number that describes what is the maximum number of spectral basis functions with be used
+#'
+#' @return object of the class Series containing information needed to perform prediction on new points
 #' @export
-#'
 regressionFunction.Series=function(x,responses,extra=NULL)
 {
   # Both x and responses are matrices
@@ -282,12 +292,15 @@ regressionFunction.Series=function(x,responses,extra=NULL)
 }
 
 
-#' Title
+#' Print function for object of the class Series
 #'
-#' @param regressionObject
-#' @param bestI
+#' This function is typically not directly used by the user; it is used inside  \code{\link{print.FlexCoDE}}, the print
+#' method for the class FlexCoDE
 #'
-#' @return x
+#' @param regressionObject of the class Series
+#' @param bestI optimal number of expansion coefficients
+#'
+#' @return prints characteristics of the regressions that were fitted
 #' @export
 #'
 print.Series=function(regressionObject,bestI)
@@ -298,15 +311,16 @@ print.Series=function(regressionObject,bestI)
 }
 
 
-#' Title
+#' Lasso Regression
 #'
-#' @param x
-#' @param responses
-#' @param extra
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @return x
+#' @param x matrix with covariates that will be used for training
+#' @param responses matrix where each column is a response for the training data
+#' @param extra this argument is ignored in this function
+#'
+#' @return object of the class Lasso containing information needed to perform prediction on new points
 #' @export
-#'
 regressionFunction.Lasso=function(x,responses,extra=NULL)
 {
   # Both x and responses are matrices
@@ -325,13 +339,15 @@ regressionFunction.Lasso=function(x,responses,extra=NULL)
   return(regressionObject)
 }
 
-
-#' Title
+#' Print function for object of the class Lasso
 #'
-#' @param regressionObject
-#' @param bestI
+#' This function is typically not directly used by the user; it is used inside  \code{\link{print.FlexCoDE}}, the print
+#' method for the class FlexCoDE
 #'
-#' @return x
+#' @param regressionObject of the class Lasso
+#' @param bestI optimal number of expansion coefficients
+#'
+#' @return prints characteristics of the regressions that were fitted
 #' @export
 #'
 print.Lasso=function(regressionObject,bestI)
@@ -351,15 +367,16 @@ print.Lasso=function(regressionObject,bestI)
 }
 
 
-#' Title
+#' Forest Regression
 #'
-#' @param x
-#' @param responses
-#' @param extra
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @return x
+#' @param x matrix with covariates that will be used for training
+#' @param responses matrix where each column is a response for the training data
+#' @param extra list with one components named p0Vec, which contains a vetor with different number of variables randomly sampled as candidates at each split of the forest regression (aka mtry in randomForest package); the function will choose the best value among them
+#'
+#' @return object of the class Forest containing information needed to perform prediction on new points
 #' @export
-#'
 regressionFunction.Forest=function(x,responses,extra=NULL)
 {
 
@@ -404,12 +421,15 @@ regressionFunction.Forest=function(x,responses,extra=NULL)
   return(regressionObject)
 }
 
-#' Title
+#' Print function for object of the class Forest
 #'
-#' @param regressionObject
-#' @param bestI
+#' This function is typically not directly used by the user; it is used inside  \code{\link{print.FlexCoDE}}, the print
+#' method for the class FlexCoDE
 #'
-#' @return x
+#' @param regressionObject of the class Forest
+#' @param bestI optimal number of expansion coefficients
+#'
+#' @return prints characteristics of the regressions that were fitted
 #' @export
 #'
 print.Forest=function(regressionObject,bestI)

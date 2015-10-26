@@ -83,18 +83,18 @@ zTest=data[randomIndex[(nTrain+nValidation+1):n],d+1]
 fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
             nIMax = 20,regressionFunction = regressionFunction.NN)
 fit$estimatedRisk
+print(fit)
 
 # Plot estimated curves evaluates on new test points, and
 # compare with true conditional density
 predictedValues=predict(fit,xTest,B=500)
 plot(predictedValues$z,predictedValues$CDE[1,])
 lines(predictedValues$z,dnorm(predictedValues$z,xTest[1,1],0.1),col=2)
-print(fit)
 
 
 ############################################################
 # fit SpAM estimator (appropriate for sparse structure); we change
-# default value of tuning parameters
+######## default value of tuning parameters
 ############################################################
 fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
                 nIMax = 50,regressionFunction = regressionFunction.SpAM,
@@ -110,22 +110,38 @@ plot(predictedValues$z,predictedValues$CDE[1,])
 lines(predictedValues$z,dnorm(predictedValues$z,xTest[1,1],0.1),col=2)
 
 
-# Series
+############################################################
+######## Forest: also appropriate
+############################################################
 fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
-                nIMax = 20,regressionFunction = regressionFunction.Series)
-fit$estimatedRisk
+                nIMax = 30,regressionFunction = regressionFunction.Forest)
+fit$estimatedRisk # even better than SpAM!
+print(fit)
 
-# Lasso
-fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
-                nIMax = 20,regressionFunction = regressionFunction.Lasso)
-fit$estimatedRisk
-
-# Forest
-fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
-                nIMax = 20,regressionFunction = regressionFunction.Forest)
-fit$estimatedRisk
+# Plot estimated curves evaluates on new test points, and
+# compare with true conditional density
 predictedValues=predict(fit,xTest,B=500)
 plot(predictedValues$z,predictedValues$CDE[1,])
 lines(predictedValues$z,dnorm(predictedValues$z,xTest[1,1],0.1),col=2)
+
+
+
+############################################################
+######## Series
+############################################################
+fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
+                nIMax = 20,regressionFunction = regressionFunction.Series)
+fit$estimatedRisk
+print(fit)
+
+
+############################################################
+######## Lasso
+############################################################
+fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
+                nIMax = 20,regressionFunction = regressionFunction.Lasso)
+fit$estimatedRisk
+print(fit)
+
 }
 

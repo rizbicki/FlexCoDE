@@ -7,7 +7,7 @@
 estimateErrorFlexCoDE(objectCDE = objectCDE, xTest, zTest, se = TRUE)
 }
 \arguments{
-\item{objectCDE}{is an object of the class FlexCoDE}
+\item{objectCDE}{is an object of the class FlexCoDEtypically typically fitted used \code{\link{fitFlexCoDE}} beforehand}
 
 \item{xTest}{Covariates x of the sample used to test the model (one observation per row)}
 

@@ -2,21 +2,21 @@
 % Please edit documentation in R/regressionFittingFunctions.R
 \name{regressionFunction.SpAM}
 \alias{regressionFunction.SpAM}
-\title{Title}
+\title{SpAM Regression (Sparse Additive Model)}
 \usage{
 regressionFunction.SpAM(x, responses, extra = NULL)
 }
 \arguments{
-\item{x}{}
+\item{x}{matrix with covariates that will be used for training}
 
-\item{responses}{}
+\item{responses}{matrix where each column is a response for the training data}
 
-\item{extra}{}
+\item{extra}{list with one component named sVec, which contains a vetor with different number of splins; the function will choose the best value among them}
 }
 \value{
-x
+object of the class SpAM containing information needed to perform prediction on new points
 }
 \description{
-Title
+This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 }
 

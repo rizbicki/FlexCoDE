@@ -2,21 +2,21 @@
 % Please edit documentation in R/regressionFittingFunctions.R
 \name{regressionFunction.Forest}
 \alias{regressionFunction.Forest}
-\title{Title}
+\title{Forest Regression}
 \usage{
 regressionFunction.Forest(x, responses, extra = NULL)
 }
 \arguments{
-\item{x}{}
+\item{x}{matrix with covariates that will be used for training}
 
-\item{responses}{}
+\item{responses}{matrix where each column is a response for the training data}
 
-\item{extra}{}
+\item{extra}{list with one components named p0Vec, which contains a vetor with different number of variables randomly sampled as candidates at each split of the forest regression (aka mtry in randomForest package); the function will choose the best value among them}
 }
 \value{
-x
+object of the class Forest containing information needed to perform prediction on new points
 }
 \description{
-Title
+This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 }
 

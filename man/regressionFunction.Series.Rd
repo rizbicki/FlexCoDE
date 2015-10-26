@@ -2,21 +2,21 @@
 % Please edit documentation in R/regressionFittingFunctions.R
 \name{regressionFunction.Series}
 \alias{regressionFunction.Series}
-\title{Title}
+\title{Spectral Series Regression}
 \usage{
 regressionFunction.Series(x, responses, extra = NULL)
 }
 \arguments{
-\item{x}{}
+\item{x}{matrix with covariates that will be used for training}
 
-\item{responses}{}
+\item{responses}{matrix where each column is a response for the training data}
 
-\item{extra}{}
+\item{extra}{list with two components: the first is named epsGrid, which contains a vetor with different number of bandwidths to be used in the gaussian kernel; the function will choose the best value among them; the second is called nXMax and contains a single integer number that describes what is the maximum number of spectral basis functions with be used}
 }
 \value{
-X
+object of the class Series containing information needed to perform prediction on new points
 }
 \description{
-Title
+This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 }
 

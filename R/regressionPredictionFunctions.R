@@ -1,10 +1,12 @@
-#' Title
+#' Predict NN regression
 #'
-#' @param object
-#' @param xNew
-#' @param maxTerms
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @return x
+#' @param object object of the class NN
+#' @param xNew matrix with covariates where prediction will be calculated
+#' @param maxTerms maximum number of expansion coefficients
+#'
+#' @return returns matrix where element (i,j) contains the estimate of the j-th expansion coefficient for the j-th sample
 #' @export
 #'
 predict.NN=function(object,xNew,maxTerms=NULL)
@@ -37,13 +39,15 @@ predict.NN=function(object,xNew,maxTerms=NULL)
   return(predictedValidation)
 }
 
-#' Title
+#' Predict SpAM regression
 #'
-#' @param object
-#' @param xNew
-#' @param maxTerms
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @return x
+#' @param object object of the class SpAM
+#' @param xNew matrix with covariates where prediction will be calculated
+#' @param maxTerms maximum number of expansion coefficients
+#'
+#' @return returns matrix where element (i,j) contains the estimate of the j-th expansion coefficient for the j-th sample
 #' @export
 #'
 predict.SpAM=function(object,xNew,maxTerms=NULL)
@@ -83,13 +87,15 @@ predict.SpAM=function(object,xNew,maxTerms=NULL)
 }
 
 
-#' Title
+#' Predict Series regression
 #'
-#' @param object
-#' @param xNew
-#' @param maxTerms
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @return x
+#' @param object object of the class Series
+#' @param xNew matrix with covariates where prediction will be calculated
+#' @param maxTerms maximum number of expansion coefficients
+#'
+#' @return returns matrix where element (i,j) contains the estimate of the j-th expansion coefficient for the j-th sample
 #' @export
 #'
 predict.Series=function(object,xNew,maxTerms=NULL)
@@ -126,13 +132,15 @@ predict.Series=function(object,xNew,maxTerms=NULL)
 
 
 
-#' Title
+#' Predict Lasso regression
 #'
-#' @param object
-#' @param xNew
-#' @param maxTerms
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @return x
+#' @param object object of the class Lasso
+#' @param xNew matrix with covariates where prediction will be calculated
+#' @param maxTerms maximum number of expansion coefficients
+#'
+#' @return returns matrix where element (i,j) contains the estimate of the j-th expansion coefficient for the j-th sample
 #' @export
 #'
 predict.Lasso=function(object,xNew,maxTerms=NULL)
@@ -155,13 +163,15 @@ predict.Lasso=function(object,xNew,maxTerms=NULL)
 }
 
 
-#' Title
+#' Predict Forest regression
 #'
-#' @param object
-#' @param xNew
-#' @param maxTerms
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @return x
+#' @param object object of the class Forest
+#' @param xNew matrix with covariates where prediction will be calculated
+#' @param maxTerms maximum number of expansion coefficients
+#'
+#' @return returns matrix where element (i,j) contains the estimate of the j-th expansion coefficient for the j-th sample
 #' @export
 #'
 predict.Forest=function(object,xNew,maxTerms=NULL)

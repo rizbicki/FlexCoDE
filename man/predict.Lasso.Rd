@@ -2,21 +2,21 @@
 % Please edit documentation in R/regressionPredictionFunctions.R
 \name{predict.Lasso}
 \alias{predict.Lasso}
-\title{Title}
+\title{Predict Lasso regression}
 \usage{
 \method{predict}{Lasso}(object, xNew, maxTerms = NULL)
 }
 \arguments{
-\item{object}{}
+\item{object}{object of the class Lasso}
 
-\item{xNew}{}
+\item{xNew}{matrix with covariates where prediction will be calculated}
 
-\item{maxTerms}{}
+\item{maxTerms}{maximum number of expansion coefficients}
 }
 \value{
-x
+returns matrix where element (i,j) contains the estimate of the j-th expansion coefficient for the j-th sample
 }
 \description{
-Title
+This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 }
 

@@ -2,21 +2,21 @@
 % Please edit documentation in R/regressionFittingFunctions.R
 \name{regressionFunction.Lasso}
 \alias{regressionFunction.Lasso}
-\title{Title}
+\title{Lasso Regression}
 \usage{
 regressionFunction.Lasso(x, responses, extra = NULL)
 }
 \arguments{
-\item{x}{}
+\item{x}{matrix with covariates that will be used for training}
 
-\item{responses}{}
+\item{responses}{matrix where each column is a response for the training data}
 
-\item{extra}{}
+\item{extra}{this argument is ignored in this function}
 }
 \value{
-x
+object of the class Lasso containing information needed to perform prediction on new points
 }
 \description{
-Title
+This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 }
 
