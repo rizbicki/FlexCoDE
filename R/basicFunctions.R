@@ -226,8 +226,9 @@ print.FlexCoDE=function(objectCDE)
 
   cat(paste("Basis used:",objectCDE$system,"\n"))
 
-  if(!is.null(objectCDE$estimatedRisk)) cat(paste("Estimated risk on validation set: ",objectCDE$estimatedRisk$mean," (",objectCDE$estimatedRisk$seBoot,")","\n",sep=""))
+  if(!is.null(objectCDE$estimatedRisk)) cat(paste("Estimated risk on test set: ",objectCDE$estimatedRisk$mean," (se: ",objectCDE$estimatedRisk$seBoot,")","\n",sep=""))
 
-  print(objectCDE$regressionObject)
+  cat("\n")
+  print(objectCDE$regressionObject,bestI=objectCDE$bestI)
 
 }

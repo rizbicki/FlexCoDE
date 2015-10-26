@@ -10,4 +10,5 @@ Imports: glmnet,
     SAM,
     fields,
     randomForest,
-    splines
+    splines,
+    ggplot2

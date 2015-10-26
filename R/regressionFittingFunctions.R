@@ -1,4 +1,3 @@
-
 #' Title
 #'
 #' @param x
@@ -49,6 +48,19 @@ regressionFunction.NN=function(x,responses,extra=NULL)
   rm(xTrain,responsesTrain)
   gc(verbose=FALSE)
   return(regressionObject)
+}
+
+#' Title
+#'
+#' @param regressionObject
+#' @param bestI
+#'
+#' @return x
+#' @export
+#'
+print.NN=function(regressionObject,bestI)
+{
+  cat(paste("Number of neighbors chosen for each fitted regression:",paste(regressionObject$bestNN[1:bestI],collapse=", "),"\n"))
 }
 
 #' Title
@@ -114,6 +126,36 @@ regressionFunction.SpAM=function(x,responses,extra=NULL)
   gc(verbose=FALSE)
   return(regressionObject)
 }
+
+
+#' Title
+#'
+#' @param regressionObject
+#' @param bestI
+#'
+#' @return x
+#' @export
+#'
+print.SpAM=function(regressionObject,bestI)
+{
+
+  bestS=sapply(regressionObject$fittedReg, function(x)x$bestS)[1:bestI]
+  cat(paste("Number of splines chosen for each fitted regression:",paste(bestS,collapse = ", "),"\n"))
+
+  cat("\n")
+
+  bestS=t(sapply(regressionObject$fittedReg, function(x)x$whichCovariates)[,1:bestI])
+  freq=colMeans(bestS)
+
+  table=data.frame(covariate=order(freq,decreasing = TRUE),frequency=sort(freq,decreasing =  TRUE))
+  cat(paste("How many times each covariate was selected: \n"))
+  print(table)
+
+  barplot(table$frequency,names = table$covariate,xlab= "Covariate",ylab="Frequency")
+
+
+}
+
 
 #' Title
 #'
@@ -242,6 +284,22 @@ regressionFunction.Series=function(x,responses,extra=NULL)
 
 #' Title
 #'
+#' @param regressionObject
+#' @param bestI
+#'
+#' @return x
+#' @export
+#'
+print.Series=function(regressionObject,bestI)
+{
+  cat(paste("Number of expansion coefficients chosen for each fitted regression:",paste(regressionObject$bestNX[1:bestI],collapse = ", "),"\n"))
+  cat("\n")
+  cat(paste("Best epsilon for spectral decomposition:",regressionObject$bestEps,"\n"))
+}
+
+
+#' Title
+#'
 #' @param x
 #' @param responses
 #' @param extra
@@ -265,6 +323,31 @@ regressionFunction.Lasso=function(x,responses,extra=NULL)
   regressionObject$coefficients=coeffs
   class(regressionObject)="Lasso"
   return(regressionObject)
+}
+
+
+#' Title
+#'
+#' @param regressionObject
+#' @param bestI
+#'
+#' @return x
+#' @export
+#'
+print.Lasso=function(regressionObject,bestI)
+{
+
+  whichCoefficients=t(apply(regressionObject$coefficients[-1,1:bestI],1,function(x)(abs(x)>1e-20)))
+
+  freq=colMeans(whichCoefficients)
+
+  table=data.frame(covariate=order(freq,decreasing = TRUE),frequency=sort(freq,decreasing =  TRUE))
+  cat(paste("How many times each covariate was selected: \n"))
+  print(table)
+
+  barplot(table$frequency,names = table$covariate,xlab= "Covariate",ylab="Frequency")
+
+
 }
 
 
@@ -321,3 +404,26 @@ regressionFunction.Forest=function(x,responses,extra=NULL)
   return(regressionObject)
 }
 
+#' Title
+#'
+#' @param regressionObject
+#' @param bestI
+#'
+#' @return x
+#' @export
+#'
+print.Forest=function(regressionObject,bestI)
+{
+
+  importance=sapply(regressionObject$fittedReg,function(x)x$importance)[,1:bestI]
+
+  freq=rowMeans(importance)
+
+  table=data.frame(covariate=order(freq,decreasing = TRUE),frequency=sort(freq,decreasing =  TRUE))
+  cat(paste("Average Importance of each covariate: \n"))
+  print(table)
+
+  barplot(table$frequency,names = table$covariate,xlab= "Covariate",ylab="Average Importance")
+
+
+}
