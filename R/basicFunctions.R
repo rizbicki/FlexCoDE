@@ -347,9 +347,10 @@ plot.FlexCoDE_binded=function(objectCDE_binded,xTest,zTest,nPlots=min(nrow(xTest
 #' @param ... other objects of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand
 #'
 #' @return list with all objects combined. Result is of the class "FlexCoDE_binded"
+#' @example ../testPackageBind.R
+#'
 #' @export
 #'
-#' @example ../testPackageBind.R
 bindFlexCoDE=function(objectCDE1,objectCDE2,...)
 {
   returnValue=append(list(objectCDE1,objectCDE2),list(...))
@@ -366,9 +367,10 @@ bindFlexCoDE=function(objectCDE1,objectCDE2,...)
 #' @param zValidation Responses z used to validate (tune) the model  (matrix with 1 column). Each row corresponds to a row of the xValidation argument
 #'
 #' @return Returns an object of the class "combinedFlexCoDE" which contains the weights best linear combination of the input models, together with all fitted models
-#' @export
 #'
 #' @example ../testPackageCombined.R
+#'
+#' @export
 combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation)
 {
   if(class(objectCDE_binded)!="FlexCoDE_binded")
