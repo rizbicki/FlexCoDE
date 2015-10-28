@@ -349,7 +349,7 @@ plot.FlexCoDE_binded=function(objectCDE_binded,xTest,zTest,nPlots=min(nrow(xTest
 #' @return list with all objects combined. Result is of the class "FlexCoDE_binded"
 #' @export
 #'
-#' @examples # ../testPackageBind.R
+#' @example ../testPackageBind.R
 bindFlexCoDE=function(objectCDE1,objectCDE2,...)
 {
   returnValue=append(list(objectCDE1,objectCDE2),list(...))
@@ -368,7 +368,7 @@ bindFlexCoDE=function(objectCDE1,objectCDE2,...)
 #' @return Returns an object of the class "combinedFlexCoDE" which contains the weights best linear combination of the input models, together with all fitted models
 #' @export
 #'
-#' @examples ../testPackageCombined.R
+#' @example ../testPackageCombined.R
 combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation)
 {
   if(class(objectCDE_binded)!="FlexCoDE_binded")
