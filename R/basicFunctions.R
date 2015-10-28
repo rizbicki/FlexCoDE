@@ -180,9 +180,10 @@ estimateErrorFlexCoDE=function(objectCDE=objectCDE,xTest,zTest,se=TRUE)
 #' @return The return value is an object with the following components
 #' \item{z}{Points where the density was evaluate}
 #' \item{CDE }{Matrix with value of the density at points z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
-#' @export
 #'
 #' @examples # See \code{\link{fitFlexCoDE}}
+#'
+#' @export
 predict.FlexCoDE=function(objectCDE,xNew,B=1000)
 {
   if(class(objectCDE)!="FlexCoDE")
@@ -219,6 +220,7 @@ predict.FlexCoDE=function(objectCDE,xNew,B=1000)
 #' @param objectCDE Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand
 #'
 #' @return returns information regarding the fitted model
+#'
 #' @export
 #'
 print.FlexCoDE=function(objectCDE)
@@ -252,9 +254,11 @@ print.FlexCoDE=function(objectCDE)
 #' @param lineWidth Line width of the curves to be ploted
 
 #' @return Plot with estimated densities
-#' @export
 #'
 #' @examples # See \code{\link{fitFlexCoDE}}
+#'
+#' @export
+#'
 plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
 {
 
