@@ -37,6 +37,8 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   objectCDE$zMin=min(zTrain)
   zTrain=(zTrain-objectCDE$zMin)/(objectCDE$zMax-objectCDE$zMin)
 
+  warning("Currently, most regression methods only work when there are two or more covariates")
+
   class(objectCDE)="FlexCoDE"
 
   if(verbose) print("Transforming Response")
@@ -67,7 +69,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   objectCDE$bestError=min(objectCDE$errors)
 
   if(verbose) print("Choosing optimal cutoff Delta")
-  delta=chooseDelta(objectCDE, xValidation,zValidation,deltaGrid)
+  delta=chooseDelta(objectCDE, xValidation,objectCDE$zMin+(objectCDE$zMax-objectCDE$zMin)*zValidation,deltaGrid)
   objectCDE$bestDelta=delta
 
   if(!is.null(xTest)&!is.null(zTest))
@@ -80,6 +82,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   if(objectCDE$bestI==objectCDE$nIMax)
     warning("bestI=nIMax, try increasing nIMax if you want to improve performance")
 
+  objectCDE$verbose=verbose
   return(objectCDE)
 }
 
@@ -168,7 +171,7 @@ estimateErrorFlexCoDE=function(objectCDE=objectCDE,xTest,zTest,se=TRUE)
 }
 
 
-#' Evaluates the estimated  density of new observations (testing points)
+#' Evaluates the estimated  density of new observations (testing points) of a "FlexCoDE" object
 #'
 #' @param objectCDE Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand
 #' @param xNew Matrix with nTest rows and same number of columns as xTrain, containing x's for which the estimates are desired.
@@ -179,6 +182,7 @@ estimateErrorFlexCoDE=function(objectCDE=objectCDE,xTest,zTest,se=TRUE)
 #' \item{CDE }{Matrix with value of the density at points z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
 #' @export
 #'
+#' @examples # See \code{\link{fitFlexCoDE}}
 predict.FlexCoDE=function(objectCDE,xNew,B=1000)
 {
   if(class(objectCDE)!="FlexCoDE")
@@ -234,5 +238,285 @@ print.FlexCoDE=function(objectCDE)
   cat("\n")
   cat("####### Caracteristic of the fitted regression:\n\n")
   print(objectCDE$regressionObject,bestI=objectCDE$bestI)
+
+}
+
+
+#' Plots examples of estimated densities together with real response
+#'
+#' @param objectCDE Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand
+#' @param xTest Covariates x of the sample used to test the model (one observation per row)
+#' @param zTest Response z of the sample used to test the model (one observation per row)
+#' @param nPlots Number of desired densities to be ploted (which will be picked at random). Default is minimum between 8 and number of testing points
+#' @param fontSize Font size of axis labels and legend
+#' @param lineWidth Line width of the curves to be ploted
+
+#' @return Plot with estimated densities
+#' @export
+#'
+#' @examples # See \code{\link{fitFlexCoDE}}
+plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
+{
+
+  if(is.null(xTest))
+    stop("Please provide xTest")
+
+
+  if(is.null(zTest))
+    stop("Please provide zTest")
+
+  if(class(objectCDE)!="FlexCoDE")
+    stop("objectCDE needs to be of class FlexCoDE")
+  if(objectCDE$verbose)  print("Calculating predicted values")
+  predictedValues=predict(objectCDE,xTest,B=500)
+
+  g=list()
+  randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
+  if(objectCDE$verbose) print("Creating plots")
+  for(i in 1:nPlots)
+  {
+    data=data.frame(x=predictedValues$z,y=predictedValues$CDE[randomOrder[i],])
+    g[[i]]=
+      ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth)+ggplot2::xlab("Response")+
+      ggplot2::ylab("Estimated Density")+
+      ggplot2::geom_vline(xintercept=zTest[randomOrder[i]],size=lineWidth)+
+      ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))
+  }
+  do.call(gridExtra::grid.arrange,g)
+
+}
+
+
+
+
+#' Plots examples of estimated densities together with real response
+#'
+#' @param objectCDE_binded Object of the class "FlexCoDE_binded", typically obtained using \code{\link{bindFlexCoDE}} beforehand
+#' @param xTest Covariates x of the sample used to test the model (one observation per row)
+#' @param zTest Response z of the sample used to test the model (one observation per row)
+#' @param nPlots Number of desired densities to be ploted (which will be picked at random). Default is minimum between 8 and number of testing points
+#' @param fontSize Font size of axis labels and legend
+#' @param lineWidth Line width of the curves to be ploted
+
+#' @return Plot with estimated densities
+#' @export
+#'
+#' @examples # See \code{\link{bindFlexCoDE}}
+plot.FlexCoDE_binded=function(objectCDE_binded,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
+{
+
+  if(is.null(xTest))
+    stop("Please provide xTest")
+
+
+  if(is.null(zTest))
+    stop("Please provide zTest")
+
+  if(class(objectCDE_binded)!="FlexCoDE_binded")
+    stop("objectCDE_binded needs to be of class FlexCoDE_binded")
+  if(objectCDE_binded[[1]]$verbose)  print("Calculating predicted values")
+
+  predictedValues=list()
+  for(b in 1:length(objectCDE_binded))
+  {
+    predictedValues[[b]]=predict(objectCDE_binded[[b]],xTest,B=500)
+  }
+
+  g=list()
+  randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
+  if(objectCDE_binded[[1]]$verbose)  print("Creating plots")
+  for(i in 1:nPlots)
+  {
+    x=c(sapply(predictedValues, function(x)x$z))
+    y=c(sapply(predictedValues, function(x)x$CDE[randomOrder[i],]))
+    data=data.frame(x=x,y=y,Estimator=as.factor(rep(1:length(predictedValues),each=length(predictedValues[[1]]$z))))
+    g[[i]]=
+      ggplot2::ggplot(data,ggplot2::aes(x=x,y=y,color=Estimator))+ggplot2::geom_line(size=lineWidth)+
+      ggplot2::xlab("Response")+ggplot2::ylab("Estimated Density")+ggplot2::geom_vline(xintercept=zTest[randomOrder[i]],size=lineWidth)+
+      ggplot2::theme(legend.direction = "horizontal",legend.position = "top",legend.title=ggplot2::element_text(size=16,face="bold"),legend.text=ggplot2::element_text(size=fontSize),axis.title=ggplot2::element_text(size=fontSize,face="bold"))
+  }
+  do.call(gridExtra::grid.arrange,g)
+
+}
+
+
+#' Binds together objects of the class "FlexCoDE"
+#'
+#' @param objectCDE1 An object of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand
+#' @param objectCDE2 An object of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand
+#' @param ... other objects of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand
+#'
+#' @return list with all objects combined. Result is of the class "FlexCoDE_binded"
+#' @export
+#'
+#' @examples # ../testPackageBind.R
+bindFlexCoDE=function(objectCDE1,objectCDE2,...)
+{
+  returnValue=append(list(objectCDE1,objectCDE2),list(...))
+  class(returnValue)="FlexCoDE_binded"
+  return(returnValue)
+}
+
+
+
+#' Finds best linear combination of several FlexCoDE estimates
+#'
+#' @param objectCDE_binded An object of the class FlexCoDE_binded with a fitted CDE, typically fitted used \code{\link{bindFlexCoDE}} beforehand
+#' @param xValidation Covariates x used to validate (tune) the model (one x observation per row).
+#' @param zValidation Responses z used to validate (tune) the model  (matrix with 1 column). Each row corresponds to a row of the xValidation argument
+#'
+#' @return Returns an object of the class "combinedFlexCoDE" which contains the weights best linear combination of the input models, together with all fitted models
+#' @export
+#'
+#' @examples ../testPackageCombined.R
+combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation)
+{
+  if(class(objectCDE_binded)!="FlexCoDE_binded")
+    stop("Class of objectCDE_binded should be FlexCoDE_binded")
+  predictedValues=list()
+  for(b in 1:length(objectCDE_binded))
+  {
+    predictedValues[[b]]=predict(objectCDE_binded[[b]],xValidation,B=500)
+  }
+
+  grid=predictedValues[[1]]$z
+  estimatesValidation=lapply(predictedValues, function(x)x$CDE)
+
+
+  width=grid[2]-grid[1]
+  nModels=length(estimatesValidation)
+
+  B=matrix(0,nModels,nModels)
+  for(i in 1:nModels)
+  {
+    for(j in 1:nModels)
+    {
+      B[i,j]=mean(width*rowSums(estimatesValidation[[i]]*estimatesValidation[[j]]))
+    }
+  }
+
+  whichZ=apply(as.matrix(zValidation),1,function(x){
+    which.min(abs(x-grid))
+  })
+  b=rep(NA,nModels)
+  for(i in 1:nModels)
+  {
+    m=estimatesValidation[[i]]
+    b[i]=mean(m[(1:nrow(m)) + nrow(m) * (whichZ - 1)])
+  }
+
+  weights=quadprog::solve.QP(Dmat=B, dvec=b, Amat=t(rbind(1,diag(nModels))), bvec=c(1,rep(0,nModels)), meq=1, factorized=FALSE)
+  weights$solution[weights$solution<0]=0
+  weights$solution=weights$solution/sum(weights$solution)
+
+  returnValue=list(objectCDEs=objectCDE_binded,weights=weights$solution)
+  class(returnValue)="combinedFlexCoDE"
+
+  return(returnValue)
+}
+
+#' Evaluates the estimated  density of new observations (testing points) of a "combinedFlexCoDE" object
+#'
+#' @param objectCDE Object of the class "combinedFlexCoDE", typically fitted used \code{\link{combineFlexCoDE}} beforehand
+#' @param xNew Matrix with nTest rows and same number of columns as xTrain, containing x's for which the estimates are desired.
+#' @param B Number of point where f(z|x) will be evaluated (on the z scale). This will be equally spaced between zMin and zMax
+#'
+#' @return The return value is an object with the following components
+#' \item{z}{Points where the density was evaluate}
+#' \item{CDE }{Matrix with value of the density at points z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
+#' @export
+#'
+#' @examples # See \code{\link{combineFlexCoDE}}
+predict.combinedFlexCoDE=function(objectCombined,xNew,B=1000)
+{
+
+
+  predictedValues=list()
+  for(b in 1:length(objectCombined$objectCDEs))
+  {
+    predictedValues[[b]]=predict(objectCombined$objectCDEs[[b]],xNew,B=500)
+  }
+
+  grid=predictedValues[[1]]$z
+  estimatesValidation=lapply(predictedValues, function(x)x$CDE)
+
+  predictedValuesFinal=matrix(0,nrow(estimatesValidation[[1]]),ncol(estimatesValidation[[1]]))
+  for(b in 1:length(estimatesValidation))
+  {
+    predictedValuesFinal=predictedValuesFinal+estimatesValidation[[b]]*objectCombined$weights[b]
+  }
+
+  returnValue=NULL
+  returnValue$CDE=predictedValuesFinal
+  returnValue$z=grid
+
+
+  return(returnValue)
+
+}
+
+#' Print object of classe combinedFlexCoDE
+#'
+#' @param objectCDE Object of the class "combinedFlexCoDE", typically fitted used \code{\link{combineFlexCoDE}} beforehand
+#'
+#' @return returns information regarding the fitted model
+#' @export
+#'
+print.combinedFlexCoDE=function(objectCombined)
+{
+  cat("Object of class combinedFlexCoDE containing",length(objectCombined$weights),"fitted FlexCoDE regression estimators with weights \n ",objectCombined$weights,"\n respectively \n")
+  cat("############################## \n \n")
+  cat("\n Regression fits are the following: \n")
+  for(i in 1:length(objectCombined$weights))
+  {
+    cat("############################## \n")
+    cat("\n Fit ",i,":\n",sep = "")
+    print(objectCombined$objectCDEs[[i]])
+  }
+}
+
+
+#' Plots examples of estimated densities together with real response
+#'
+#' @param objectCDE Object of the class "combinedFlexCoDE", typically fitted used \code{\link{combineFlexCoDE}} beforehand
+#' @param xTest Covariates x of the sample used to test the model (one observation per row)
+#' @param zTest Response z of the sample used to test the model (one observation per row)
+#' @param nPlots Number of desired densities to be ploted (which will be picked at random). Default is minimum between 8 and number of testing points
+#' @param fontSize Font size of axis labels and legend
+#' @param lineWidth Line width of the curves to be ploted
+#'
+#'
+#' @return Plot with estimated densities
+#' @export
+#'
+#' @examples # See \code{\link{combineFlexCoDE}}
+plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
+{
+
+  if(is.null(xTest))
+    stop("Please provide xTest")
+
+
+  if(is.null(zTest))
+    stop("Please provide zTest")
+
+  if(class(objectCombined)!="combinedFlexCoDE")
+    stop("objectCDE needs to be of class combinedFlexCoDE")
+  if(objectCombined$objectCDEs[[1]]$verbose)  print("Calculating predicted values")
+  predictedValues=predict(objectCombined,xTest,B=500)
+
+  g=list()
+  randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
+  if(objectCombined$objectCDEs[[1]]$verbose) print("Creating plots")
+  for(i in 1:nPlots)
+  {
+    data=data.frame(x=predictedValues$z,y=predictedValues$CDE[randomOrder[i],])
+    g[[i]]=
+      ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth)+ggplot2::xlab("Response")+
+      ggplot2::ylab("Estimated Density")+
+      ggplot2::geom_vline(xintercept=zTest[randomOrder[i]],size=lineWidth)+
+      ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))
+  }
+  do.call(gridExtra::grid.arrange,g)
 
 }

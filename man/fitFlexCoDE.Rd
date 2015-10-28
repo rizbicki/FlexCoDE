@@ -91,6 +91,9 @@ predictedValues=predict(fit,xTest,B=500)
 plot(predictedValues$z,predictedValues$CDE[1,])
 lines(predictedValues$z,dnorm(predictedValues$z,xTest[1,1],0.1),col=2)
 
+# Plot estimator
+plot(fit,xTest,zTest)
+
 
 ############################################################
 # fit SpAM estimator (appropriate for sparse structure); we change
