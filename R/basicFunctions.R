@@ -346,6 +346,7 @@ plot.FlexCoDE_binded=function(objectCDE_binded,xTest,zTest,nPlots=min(nrow(xTest
 #' @param objectCDE2 An object of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand
 #' @param ... other objects of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand
 #'
+#'
 #' @return list with all objects combined. Result is of the class "FlexCoDE_binded"
 #' @example ../testPackageBind.R
 #'
