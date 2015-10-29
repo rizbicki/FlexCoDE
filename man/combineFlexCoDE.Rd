@@ -69,7 +69,7 @@ predictedValues=predict(combinedEstimator,xTest,zTest)
 plot(predictedValues$z,predictedValues$CDE[1,])
 lines(predictedValues$z,dnorm(predictedValues$z,xTest[1,1],0.1),col=2)
 
-plot(combinedEstimator,xTest,zTest,nPlots = 4)
+plot(combinedEstimator,xTest,zTest,nPlots = 6)
 print(combinedEstimator)
 }
 

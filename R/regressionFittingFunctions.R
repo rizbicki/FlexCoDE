@@ -79,7 +79,7 @@ print.NN=function(regressionObject,bestI)
 #'
 #' @return object of the class SpAM containing information needed to perform prediction on new points
 #'
-#' @importFrom splines ns
+#' @import SAM
 #'
 #' @export
 regressionFunction.SpAM=function(x,responses,extra=NULL)

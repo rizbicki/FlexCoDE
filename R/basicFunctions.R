@@ -275,19 +275,26 @@ plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=
   if(objectCDE$verbose)  print("Calculating predicted values")
   predictedValues=predict(objectCDE,xTest,B=500)
 
-  g=list()
+
   randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
   if(objectCDE$verbose) print("Creating plots")
-  for(i in 1:nPlots)
+
+
+  data=data.frame(x=predictedValues$z,y=predictedValues$CDE[randomOrder[1],],dataPoint=rep(1,length(predictedValues$z)),vertical=zTest[randomOrder[1]])
+  if(nPlots>1)
   {
-    data=data.frame(x=predictedValues$z,y=predictedValues$CDE[randomOrder[i],])
-    g[[i]]=
-      ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth)+ggplot2::xlab("Response")+
-      ggplot2::ylab("Estimated Density")+
-      ggplot2::geom_vline(xintercept=zTest[randomOrder[i]],size=lineWidth)+
-      ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))
+    for(i in 2:nPlots)
+    {
+      dataB=data.frame(x=predictedValues$z,y=predictedValues$CDE[randomOrder[i],],dataPoint=rep(i,length(predictedValues$z)),vertical=zTest[randomOrder[i]])
+      data=rbind(data,dataB)
+    }
   }
-  do.call(gridExtra::grid.arrange,g)
+
+  ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth)+ggplot2::xlab("Response")+
+    ggplot2::ylab("Estimated Density")+
+    ggplot2::geom_vline(ggplot2::aes(xintercept=vertical),size=lineWidth)+
+    ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))+ ggplot2::facet_wrap(~ dataPoint)
+
 
 }
 
@@ -328,20 +335,31 @@ plot.FlexCoDE_binded=function(objectCDE_binded,xTest,zTest,nPlots=min(nrow(xTest
     predictedValues[[b]]=predict(objectCDE_binded[[b]],xTest,B=500)
   }
 
-  g=list()
+
+  namesEstimators=sapply(objectCDE_binded, function(x)
+    class(x$regressionObject))
   randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
+
   if(objectCDE_binded[[1]]$verbose)  print("Creating plots")
-  for(i in 1:nPlots)
+
+  x=c(sapply(predictedValues, function(x)x$z))
+  y=c(sapply(predictedValues, function(x)x$CDE[randomOrder[1],]))
+  data=data.frame(x=x,y=y,Estimator=as.factor(rep(namesEstimators,each=length(predictedValues[[1]]$z))),dataPoint=1,vertical=zTest[randomOrder[1]])
+  if(nPlots>1)
   {
-    x=c(sapply(predictedValues, function(x)x$z))
-    y=c(sapply(predictedValues, function(x)x$CDE[randomOrder[i],]))
-    data=data.frame(x=x,y=y,Estimator=as.factor(rep(1:length(predictedValues),each=length(predictedValues[[1]]$z))))
-    g[[i]]=
-      ggplot2::ggplot(data,ggplot2::aes(x=x,y=y,color=Estimator))+ggplot2::geom_line(size=lineWidth)+
-      ggplot2::xlab("Response")+ggplot2::ylab("Estimated Density")+ggplot2::geom_vline(xintercept=zTest[randomOrder[i]],size=lineWidth)+
-      ggplot2::theme(legend.direction = "horizontal",legend.position = "top",legend.title=ggplot2::element_text(size=16,face="bold"),legend.text=ggplot2::element_text(size=fontSize),axis.title=ggplot2::element_text(size=fontSize,face="bold"))
+    for(i in 2:nPlots)
+    {
+      y=c(sapply(predictedValues, function(x)x$CDE[randomOrder[i],]))
+      dataB=data.frame(x=x,y=y,Estimator=as.factor(rep(namesEstimators,each=length(predictedValues[[1]]$z))),dataPoint=i,vertical=zTest[randomOrder[i]])
+      data=rbind(data,dataB)
+    }
   }
-  do.call(gridExtra::grid.arrange,g)
+
+  ggplot2::ggplot(data,ggplot2::aes(x=x,y=y,color=Estimator))+ggplot2::geom_line(size=lineWidth)+ggplot2::xlab("Response")+
+    ggplot2::ylab("Estimated Density")+
+    ggplot2::geom_vline(ggplot2::aes(xintercept=vertical),size=lineWidth)+
+    ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))+ ggplot2::facet_wrap(~ dataPoint)+
+    ggplot2::theme(legend.direction = "horizontal",legend.position = "top",legend.title=ggplot2::element_text(size=16,face="bold"),legend.text=ggplot2::element_text(size=fontSize),axis.title=ggplot2::element_text(size=fontSize,face="bold"))
 
 }
 
@@ -474,11 +492,17 @@ predict.combinedFlexCoDE=function(objectCombined,xNew,B=1000)
 print.combinedFlexCoDE=function(objectCombined)
 {
   cat("Object of class combinedFlexCoDE containing",length(objectCombined$weights),"fitted FlexCoDE regression estimators with weights \n ",objectCombined$weights,"\n respectively \n")
-  cat("############################## \n \n")
-  cat("\n Regression fits are the following: \n")
+  cat("\n Estimators use the following regression methods respectively: \n")
   for(i in 1:length(objectCombined$weights))
   {
-    cat("############################## \n")
+    cat(class(objectCombined$objectCDEs[[i]]$regressionObject),"\n")
+  }
+  cat("\n \n ############################## \n")
+  cat("############################## \n \n")
+  cat("\n Regression fits are the following: \n ")
+  for(i in 1:length(objectCombined$weights))
+  {
+    cat("\n ############################## \n")
     cat("\n Fit ",i,":\n",sep = "")
     print(objectCombined$objectCDEs[[i]])
   }
@@ -514,18 +538,23 @@ plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest)
   if(objectCombined$objectCDEs[[1]]$verbose)  print("Calculating predicted values")
   predictedValues=predict(objectCombined,xTest,B=500)
 
-  g=list()
   randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
   if(objectCombined$objectCDEs[[1]]$verbose) print("Creating plots")
-  for(i in 1:nPlots)
+
+  data=data.frame(x=predictedValues$z,y=predictedValues$CDE[randomOrder[1],],dataPoint=rep(1,length(predictedValues$z)),vertical=zTest[randomOrder[1]])
+  if(nPlots>1)
   {
-    data=data.frame(x=predictedValues$z,y=predictedValues$CDE[randomOrder[i],])
-    g[[i]]=
-      ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth)+ggplot2::xlab("Response")+
-      ggplot2::ylab("Estimated Density")+
-      ggplot2::geom_vline(xintercept=zTest[randomOrder[i]],size=lineWidth)+
-      ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))
+    for(i in 2:nPlots)
+    {
+      dataB=data.frame(x=predictedValues$z,y=predictedValues$CDE[randomOrder[i],],dataPoint=rep(i,length(predictedValues$z)),vertical=zTest[randomOrder[i]])
+      data=rbind(data,dataB)
+    }
   }
-  do.call(gridExtra::grid.arrange,g)
+
+  ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth)+ggplot2::xlab("Response")+
+    ggplot2::ylab("Estimated Density")+
+    ggplot2::geom_vline(ggplot2::aes(xintercept=vertical),size=lineWidth)+
+    ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))+ ggplot2::facet_wrap(~ dataPoint)
+
 
 }
