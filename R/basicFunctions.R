@@ -184,6 +184,7 @@ estimateErrorFlexCoDE=function(objectCDE=objectCDE,xTest,zTest,se=TRUE)
 #' @examples # See \code{\link{fitFlexCoDE}}
 #'
 #' @export
+#'
 predict.FlexCoDE=function(objectCDE,xNew,B=1000)
 {
   if(class(objectCDE)!="FlexCoDE")
@@ -303,9 +304,10 @@ plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=
 #' @param lineWidth Line width of the curves to be ploted
 
 #' @return Plot with estimated densities
-#' @export
 #'
 #' @examples # See \code{\link{bindFlexCoDE}}
+#'
+#' @export
 plot.FlexCoDE_binded=function(objectCDE_binded,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
 {
 

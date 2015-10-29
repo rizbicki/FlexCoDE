@@ -11,4 +11,10 @@ Imports: glmnet,
     fields,
     randomForest,
     splines,
-    ggplot2
+    ggplot2,
+    grid,
+    gridExtra,
+    quadprog
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr
