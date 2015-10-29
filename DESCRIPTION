@@ -14,7 +14,8 @@ Imports: glmnet,
     ggplot2,
     grid,
     gridExtra,
-    quadprog
+    quadprog,
+    splines
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
