@@ -76,7 +76,11 @@ print.NN=function(regressionObject,bestI)
 #' @param responses matrix where each column is a response for the training data
 #' @param extra list with one component named sVec, which contains a vetor with different number of splins; the function will choose the best value among them
 #'
+#'
 #' @return object of the class SpAM containing information needed to perform prediction on new points
+#'
+#' @importFrom splines ns
+#'
 #' @export
 regressionFunction.SpAM=function(x,responses,extra=NULL)
 {
