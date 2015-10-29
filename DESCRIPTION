@@ -4,7 +4,7 @@ Version: 0.0.0.9000
 Authors@R: person("Rafael", "Izbicki", email = "rafaelizbicki@gmail.com", role = c("aut", "cre"))
 Description: FlexCoDE
 Depends: R (>= 3.1.1),
-    splines
+    splines, SAM
 License: GNU GPL v2
 LazyData: true
 Imports: glmnet,
