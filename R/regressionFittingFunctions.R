@@ -59,11 +59,11 @@ regressionFunction.NN=function(x,responses,extra=NULL)
 #'
 #' @param regressionObject of the class NN
 #' @param bestI optimal number of expansion coefficients
+#' @param nameCovariates name of the covariates
 #'
 #' @return prints characteristics of the regressions that were fitted
-#' @export
 #'
-print.NN=function(regressionObject,bestI)
+print.NN=function(regressionObject,bestI,nameCovariates)
 {
   cat(paste("Number of neighbors chosen for each fitted regression:",paste(regressionObject$bestNN[1:bestI],collapse=", "),"\n"))
 }
@@ -145,11 +145,11 @@ regressionFunction.SpAM=function(x,responses,extra=NULL)
 #'
 #' @param regressionObject of the class SpAM
 #' @param bestI optimal number of expansion coefficients
+#' @param nameCovariates name of the covariates
 #'
 #' @return prints characteristics of the regressions that were fitted
-#' @export
 #'
-print.SpAM=function(regressionObject,bestI)
+print.SpAM=function(regressionObject,bestI,nameCovariates)
 {
 
   bestS=sapply(regressionObject$fittedReg, function(x)x$bestS)[1:bestI]
@@ -164,9 +164,15 @@ print.SpAM=function(regressionObject,bestI)
   cat(paste("How many times each covariate was selected: \n"))
   print(table)
 
-  barplot(table$frequency,names = table$covariate,xlab= "Covariate",ylab="Frequency")
+  if(is.null(nameCovariates))
+    nameCovariates=1:nrow(table)
 
 
+  table$covariate=factor(table$covariate,levels=table$covariate)
+  ggplot2::ggplot(table, ggplot2::aes(x=as.factor(covariate),y=frequency))+
+    ggplot2::geom_bar(position="dodge",stat="identity") +
+    ggplot2::coord_flip()+ggplot2::ylab("Frequency")+ggplot2::xlab("Covariate")+
+    ggplot2::scale_x_discrete(labels=nameCovariates[as.numeric(as.character(table$covariate))])
 }
 
 
@@ -303,11 +309,11 @@ regressionFunction.Series=function(x,responses,extra=NULL)
 #'
 #' @param regressionObject of the class Series
 #' @param bestI optimal number of expansion coefficients
+#' @param nameCovariates name of the covariates
 #'
 #' @return prints characteristics of the regressions that were fitted
-#' @export
 #'
-print.Series=function(regressionObject,bestI)
+print.Series=function(regressionObject,bestI,nameCovariates)
 {
   cat(paste("Number of expansion coefficients chosen for each fitted regression:",paste(regressionObject$bestNX[1:bestI],collapse = ", "),"\n"))
   cat("\n")
@@ -350,11 +356,11 @@ regressionFunction.Lasso=function(x,responses,extra=NULL)
 #'
 #' @param regressionObject of the class Lasso
 #' @param bestI optimal number of expansion coefficients
+#' @param nameCovariates name of the covariates
 #'
 #' @return prints characteristics of the regressions that were fitted
-#' @export
 #'
-print.Lasso=function(regressionObject,bestI)
+print.Lasso=function(regressionObject,bestI,nameCovariates)
 {
 
   whichCoefficients=t(apply(regressionObject$coefficients[-1,1:bestI],1,function(x)(abs(x)>1e-20)))
@@ -365,7 +371,15 @@ print.Lasso=function(regressionObject,bestI)
   cat(paste("How many times each covariate was selected: \n"))
   print(table)
 
-  barplot(table$frequency,names = table$covariate,xlab= "Covariate",ylab="Frequency")
+  if(is.null(nameCovariates))
+    nameCovariates=1:nrow(table)
+
+
+  table$covariate=factor(table$covariate,levels=table$covariate)
+  ggplot2::ggplot(table, ggplot2::aes(x=as.factor(covariate),y=frequency))+
+    ggplot2::geom_bar(position="dodge",stat="identity") +
+    ggplot2::coord_flip()+ggplot2::ylab("Frequency")+ggplot2::xlab("Covariate")+
+    ggplot2::scale_x_discrete(labels=nameCovariates[as.numeric(as.character(table$covariate))])
 
 
 }
@@ -432,11 +446,11 @@ regressionFunction.Forest=function(x,responses,extra=NULL)
 #'
 #' @param regressionObject of the class Forest
 #' @param bestI optimal number of expansion coefficients
+#' @param nameCovariates name of the covariates
 #'
 #' @return prints characteristics of the regressions that were fitted
-#' @export
 #'
-print.Forest=function(regressionObject,bestI)
+print.Forest=function(regressionObject,bestI,nameCovariates)
 {
 
   importance=sapply(regressionObject$fittedReg,function(x)x$importance)[,1:bestI]
@@ -447,7 +461,16 @@ print.Forest=function(regressionObject,bestI)
   cat(paste("Average Importance of each covariate: \n"))
   print(table)
 
-  barplot(table$frequency,names = table$covariate,xlab= "Covariate",ylab="Average Importance")
+
+  if(is.null(nameCovariates))
+    nameCovariates=1:nrow(table)
+
+  table$covariate=factor(table$covariate,levels=table$covariate)
+  ggplot2::ggplot(table, ggplot2::aes(x=as.factor(covariate),y=frequency))+
+    ggplot2::geom_bar(position="dodge",stat="identity") +
+    ggplot2::coord_flip()+ggplot2::ylab("Average Importance")+ggplot2::xlab("Covariate")+
+    ggplot2::scale_x_discrete(labels=nameCovariates[as.numeric(as.character(table$covariate))])
+
 
 
 }

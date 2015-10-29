@@ -40,6 +40,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   warning("Currently, most regression methods only work when there are two or more covariates")
 
   class(objectCDE)="FlexCoDE"
+  objectCDE$verbose=verbose
 
   if(verbose) print("Transforming Response")
   responseFourier=calculateBasis(zTrain,nIMax,system)
@@ -82,7 +83,6 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   if(objectCDE$bestI==objectCDE$nIMax)
     warning("bestI=nIMax, try increasing nIMax if you want to improve performance")
 
-  objectCDE$verbose=verbose
   return(objectCDE)
 }
 
@@ -100,10 +100,10 @@ chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.
   if(class(objectCDE)!='FlexCoDE')
     stop("objectCDE should be of class FlexCoDE")
   error=rep(NA,length(deltaGrid))
-  cat("\n Progress Bar:\n")
+  if(objectCDE$verbose) cat("\n Progress Bar:\n")
   for(ii in 1:length(deltaGrid))
   {
-    cat(paste(c(rep("|",ii),rep(" ",length(deltaGrid)-ii),"|\n"),collapse=""))
+    if(objectCDE$verbose) cat(paste(c(rep("|",ii),rep(" ",length(deltaGrid)-ii),"|\n"),collapse=""))
     objectCDE$bestDelta=deltaGrid[ii]
     estimateErrors=estimateErrorFlexCoDE(objectCDE=objectCDE,xTest=xValidation,zTest=zValidation,se=FALSE)
     error[ii]=estimateErrors
@@ -219,12 +219,13 @@ predict.FlexCoDE=function(objectCDE,xNew,B=1000)
 #' Print object of classe FlexCoDE
 #'
 #' @param objectCDE Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand
+#' @param nameCovariates Name of the covariates used; default is NULL (print functions then use their number)
 #'
 #' @return returns information regarding the fitted model
 #'
 #' @export
 #'
-print.FlexCoDE=function(objectCDE)
+print.FlexCoDE=function(objectCDE,nameCovariates=NULL)
 {
   if(class(objectCDE)!="FlexCoDE")
     stop("Object should be of class FlexCoDE")
@@ -240,7 +241,7 @@ print.FlexCoDE=function(objectCDE)
 
   cat("\n")
   cat("####### Caracteristic of the fitted regression:\n\n")
-  print(objectCDE$regressionObject,bestI=objectCDE$bestI)
+  print(objectCDE$regressionObject,bestI=objectCDE$bestI,nameCovariates=nameCovariates)
 
 }
 

@@ -4,9 +4,65 @@ author: "Rafael Izbicki"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{FlexCoDE: the Flexible Conditional Density Estimator}
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+  %\VignetteEncoding{UTF-8}  
 ---
 
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE,cache=TRUE, fig.align="center")
+```
 
+
+# Fitting Regression Models
+
+We illustrate the methodology using the following artificial data set:
+
+```{r}
+set.seed(400)
+
+# generate data
+n=1000
+d=10
+data=matrix(NA,n,d+1)
+data[,1:d]=matrix(rnorm(n*d),n,d)
+data[,d+1]=data[,1]+rnorm(n,0,0.1)
+
+# determine sample sizes
+nTrain=round(0.7*n)
+nValidation=round(0.25*n)
+nTest=n-nTrain-nValidation
+
+# split data
+randomIndex=sample(1:n)
+xTrain=data[randomIndex[1:nTrain],1:d]
+xValidation=data[randomIndex[(nTrain+1):(nTrain+nValidation)],1:d]
+xTest=data[randomIndex[(nTrain+nValidation+1):n],1:d]
+zTrain=data[randomIndex[1:nTrain],d+1]
+zValidation=data[randomIndex[(nTrain+1):(nTrain+nValidation)],d+1]
+zTest=data[randomIndex[(nTrain+nValidation+1):n],d+1]
+
+```
+
+
+```{r}
+library(FlexCoDE)
+fit1=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
+                 regressionFunction = regressionFunction.SpAM,verbose=FALSE)
+```
+
+```{r}
+fit1
+```
+
+Different regressions have different outputs
+
+```{r}
+plot(fit1,xTest,zTest)
+```
+
+# Comparing Conditional Estimators
+
+# Combining Conditional Estimators
+
+# Designing your own regression functions
