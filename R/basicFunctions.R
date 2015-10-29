@@ -1,3 +1,5 @@
+library(spam)
+
 #' FlexCoDE Fit Conditional Density Estimation via Regression
 #'
 #' @param xTrain Covariates x used to train the model (one observation per row)

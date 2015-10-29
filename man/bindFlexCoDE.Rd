@@ -44,7 +44,7 @@ zValidation=data[randomIndex[(nTrain+1):(nTrain+nValidation)],d+1]
 zTest=data[randomIndex[(nTrain+nValidation+1):n],d+1]
 
 ############################################################
-###### fit 3 FlexCoDE
+###### fit 3 FlexCoDE estimators
 ############################################################
 fit1=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
             nIMax = 20,regressionFunction = regressionFunction.NN)
@@ -53,10 +53,6 @@ fit2=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
 fit3=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
                 nIMax = 30,regressionFunction = regressionFunction.Forest)
 
-
-fit1$bestDelta
-fit2$bestDelta
-fit3$bestDelta
 
 ############################################################
 ######## Bind estimators to plot them
