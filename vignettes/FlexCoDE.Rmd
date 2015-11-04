@@ -52,10 +52,10 @@ fit1=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
 ```
 
 ```{r}
-fit1
+print(fit1)
 ```
 
-Different regressions have different outputs
+Different regression methods have different outputs
 
 ```{r}
 plot(fit1,xTest,zTest)

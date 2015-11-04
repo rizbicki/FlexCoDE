@@ -32,12 +32,19 @@
 #' @export
 fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,system="Fourier",deltaGrid=seq(0,0.4,0.05),chooseDelta=TRUE,verbose=TRUE)
 {
+  if(is.vector(xTrain))
+    xTrain=as.matrix(xTrain)
+
+  if(is.vector(xValidation))
+    xValidation=as.matrix(xValidation)
+
+  if(is.vector(xTest))
+    xTest=as.matrix(xTest)
+
   objectCDE=NULL
   objectCDE$zMax=max(zTrain)
   objectCDE$zMin=min(zTrain)
   zTrain=(zTrain-objectCDE$zMin)/(objectCDE$zMax-objectCDE$zMin)
-
-  warning("Currently, most regression methods only work when there are two or more covariates")
 
   class(objectCDE)="FlexCoDE"
   objectCDE$verbose=verbose
@@ -81,7 +88,9 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   }
 
   if(objectCDE$bestI==objectCDE$nIMax)
-    warning("bestI=nIMax, try increasing nIMax if you want to improve performance")
+    warning("\n the optimal I found was exactly nIMax; try increasing nIMax if you want to improve performance")
+
+  objectCDE$covariateNames=colnames(xTrain)
 
   return(objectCDE)
 }
@@ -97,6 +106,10 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 #' @return Best delta
 chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.05))
 {
+
+  if(is.vector(xValidation))
+    xValidation=as.matrix(xValidation)
+
   if(class(objectCDE)!='FlexCoDE')
     stop("objectCDE should be of class FlexCoDE")
   error=rep(NA,length(deltaGrid))
@@ -125,8 +138,15 @@ chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.
 #' @return Estimated error (with SE if desired)
 #' @export
 #'
-estimateErrorFlexCoDE=function(objectCDE=objectCDE,xTest,zTest,se=TRUE)
+estimateErrorFlexCoDE=function(objectCDE,xTest,zTest,se=TRUE)
 {
+  if(class(objectCDE)!="FlexCoDE")
+    stop("objectCDE should be of class FlexCoDE")
+
+  if(is.vector(xTest))
+    xTest=as.matrix(xTest)
+
+
   zGrid=seq(objectCDE$zMin[1],objectCDE$zMax[1],length.out=500)
 
   predictedComplete=predict(objectCDE,xNew = xTest,B=length(zGrid))
@@ -187,6 +207,10 @@ estimateErrorFlexCoDE=function(objectCDE=objectCDE,xTest,zTest,se=TRUE)
 #'
 predict.FlexCoDE=function(objectCDE,xNew,B=1000)
 {
+
+  if(is.vector(xNew))
+    xNew=as.matrix(xNew)
+
   if(class(objectCDE)!="FlexCoDE")
     stop("Object should be of type FlexCoDE")
   zGrid=seq(from=0,to=1,length.out=B)
@@ -219,13 +243,12 @@ predict.FlexCoDE=function(objectCDE,xNew,B=1000)
 #' Print object of classe FlexCoDE
 #'
 #' @param objectCDE Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand
-#' @param nameCovariates Name of the covariates used; default is NULL (print functions then use their number)
 #'
 #' @return returns information regarding the fitted model
 #'
 #' @export
 #'
-print.FlexCoDE=function(objectCDE,nameCovariates=NULL)
+print.FlexCoDE=function(objectCDE)
 {
   if(class(objectCDE)!="FlexCoDE")
     stop("Object should be of class FlexCoDE")
@@ -241,7 +264,7 @@ print.FlexCoDE=function(objectCDE,nameCovariates=NULL)
 
   cat("\n")
   cat("####### Caracteristic of the fitted regression:\n\n")
-  print(objectCDE$regressionObject,bestI=objectCDE$bestI,nameCovariates=nameCovariates)
+  print(objectCDE$regressionObject,bestI=objectCDE$bestI,nameCovariates=objectCDE$covariateNames)
 
 }
 
@@ -263,6 +286,9 @@ print.FlexCoDE=function(objectCDE,nameCovariates=NULL)
 #'
 plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
 {
+  if(is.vector(xTest))
+    xTest=as.matrix(xTest)
+
 
   if(is.null(xTest))
     stop("Please provide xTest")
@@ -291,7 +317,7 @@ plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=
     }
   }
 
-  ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth)+ggplot2::xlab("Response")+
+  ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth,color=2)+ggplot2::xlab("Response")+
     ggplot2::ylab("Estimated Density")+
     ggplot2::geom_vline(ggplot2::aes(xintercept=vertical),size=lineWidth)+
     ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))+ ggplot2::facet_wrap(~ dataPoint)
@@ -318,6 +344,9 @@ plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=
 #' @export
 plot.FlexCoDE_binded=function(objectCDE_binded,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
 {
+
+  if(is.vector(xTest))
+    xTest=as.matrix(xTest)
 
   if(is.null(xTest))
     stop("Please provide xTest")
@@ -391,14 +420,21 @@ bindFlexCoDE=function(objectCDE1,objectCDE2,...)
 #' @param objectCDE_binded An object of the class FlexCoDE_binded with a fitted CDE, typically fitted used \code{\link{bindFlexCoDE}} beforehand
 #' @param xValidation Covariates x used to validate (tune) the model (one x observation per row).
 #' @param zValidation Responses z used to validate (tune) the model  (matrix with 1 column). Each row corresponds to a row of the xValidation argument
-#'
+#' @param xTest Covariates x used to estimate risk of final model (one observation per row; same number of columns as xTrain). Default is NULL
+#' @param zTest Responses z used to estimate risk of final model  (matrix with one column; one observation per row). Default is NULL
 #' @return Returns an object of the class "combinedFlexCoDE" which contains the weights best linear combination of the input models, together with all fitted models
 #'
 #' @example ../testPackageCombined.R
 #'
 #' @export
-combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation)
+combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation,xTest=NULL,zTest=NULL)
 {
+
+
+  if(is.vector(xValidation))
+    xValidation=as.matrix(xValidation)
+
+
   if(class(objectCDE_binded)!="FlexCoDE_binded")
     stop("Class of objectCDE_binded should be FlexCoDE_binded")
   predictedValues=list()
@@ -437,8 +473,21 @@ combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation)
   weights$solution[weights$solution<0]=0
   weights$solution=weights$solution/sum(weights$solution)
 
+
+
   returnValue=list(objectCDEs=objectCDE_binded,weights=weights$solution)
   class(returnValue)="combinedFlexCoDE"
+
+  rm(objectCDE_binded)
+  gc(verbose = FALSE)
+
+  if(!is.null(xTest)&!is.null(zTest))
+  {
+    if(returnValue$objectCDEs[[1]]$verbose) print("Estimating risk on test set")
+    error=estimateErrorCombined(returnValue,xTest,zTest,se=TRUE)
+    returnValue$estimatedRisk=error
+  }
+
 
   return(returnValue)
 }
@@ -457,7 +506,8 @@ combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation)
 #' @examples # See \code{\link{combineFlexCoDE}}
 predict.combinedFlexCoDE=function(objectCombined,xNew,B=1000)
 {
-
+  if(is.vector(xNew))
+    xNew=as.matrix(xNew)
 
   predictedValues=list()
   for(b in 1:length(objectCombined$objectCDEs))
@@ -498,6 +548,12 @@ print.combinedFlexCoDE=function(objectCombined)
   {
     cat(class(objectCombined$objectCDEs[[i]]$regressionObject),"\n")
   }
+
+  if(!is.null(objectCombined$estimatedRisk))
+  {
+    cat(paste("Estimated risk on test set: ",objectCombined$estimatedRisk$mean," (se: ",objectCombined$estimatedRisk$seBoot,")","\n",sep=""))
+  }
+
   cat("\n \n ############################## \n")
   cat("############################## \n \n")
   cat("\n Regression fits are the following: \n ")
@@ -512,7 +568,7 @@ print.combinedFlexCoDE=function(objectCombined)
 
 #' Plots examples of estimated densities together with real response
 #'
-#' @param objectCDE Object of the class "combinedFlexCoDE", typically fitted used \code{\link{combineFlexCoDE}} beforehand
+#' @param objectCombined Object of the class "combinedFlexCoDE", typically fitted used \code{\link{combineFlexCoDE}} beforehand
 #' @param xTest Covariates x of the sample used to test the model (one observation per row)
 #' @param zTest Response z of the sample used to test the model (one observation per row)
 #' @param nPlots Number of desired densities to be ploted (which will be picked at random). Default is minimum between 8 and number of testing points
@@ -526,6 +582,10 @@ print.combinedFlexCoDE=function(objectCombined)
 #' @examples # See \code{\link{combineFlexCoDE}}
 plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
 {
+
+  if(is.vector(xTest))
+    xTest=as.matrix(xTest)
+
 
   if(is.null(xTest))
     stop("Please provide xTest")
@@ -552,10 +612,73 @@ plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest)
     }
   }
 
-  ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth)+ggplot2::xlab("Response")+
+  ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth,color=2)+ggplot2::xlab("Response")+
     ggplot2::ylab("Estimated Density")+
-    ggplot2::geom_vline(ggplot2::aes(xintercept=vertical),size=lineWidth)+
+    ggplot2::geom_vline(ggplot2::aes(xintercept=vertical),size=lineWidth,color=2)+
     ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))+ ggplot2::facet_wrap(~ dataPoint)
+
+
+}
+
+
+#' Estimate error (risk) of combinedFlexCoDE object via test set
+#'
+#' @param objectCombined Object of the class "combinedFlexCoDE", typically fitted used \code{\link{combineFlexCoDE}} beforehand
+#' @param xTest Covariates x of the sample used to test the model (one observation per row)
+#' @param zTest Response z of the sample used to test the model (one observation per row)
+#' @param se Should standard error be computed? Default is TRUE
+#'
+#' @return Estimated error (with SE if desired)
+#' @export
+#'
+estimateErrorCombined=function(objectCombined,xTest,zTest,se=TRUE)
+{
+
+  if(is.vector(xTest))
+    xTest=as.matrix(xTest)
+
+  if(class(objectCombined)!="combinedFlexCoDE")
+    stop("objectCombined should be of class combinedFlexCoDE")
+
+  zGrid=seq(objectCombined$objectCDEs[[1]]$zMin[1],objectCombined$objectCDEs[[1]]$zMax,length.out=500)
+
+  predictedComplete=predict(objectCombined,xNew = xTest,B=length(zGrid))
+  predictedComplete=predictedComplete$CDE*(objectCombined$objectCDEs[[1]]$zMax-objectCombined$objectCDEs[[1]]$zMin)
+
+  colmeansComplete=colMeans(predictedComplete^2)
+  sSquare=mean(colmeansComplete)
+
+  n=length(zTest)
+  predictedObserved=apply(as.matrix(1:n),1,function(xx) { index=which.min(abs(zTest[xx]-zGrid))
+  return(predictedComplete[xx,index])
+  })
+  likeli=mean(predictedObserved)
+
+  if(!se)
+    return(1/2*sSquare-likeli)
+
+  # Bootstrap
+  output=NULL
+  output$mean=1/2*sSquare-likeli
+
+  boot=1000
+  meanBoot=apply(as.matrix(1:boot),1,function(xx){
+    sampleBoot=sample(1:n,replace=T)
+
+    predictedCompleteBoot=predictedComplete[sampleBoot,]
+    zTestBoot=zTest[sampleBoot]
+
+    colmeansComplete=colMeans(predictedCompleteBoot^2)
+    sSquare=mean(colmeansComplete)
+
+    predictedObserved=apply(as.matrix(1:n),1,function(xx) { index=which.min(abs(zTestBoot[xx]-zGrid))
+    return(predictedCompleteBoot[xx,index])
+    })
+    likeli=mean(predictedObserved)
+    return(1/2*sSquare-likeli)
+  })
+  output$seBoot=sqrt(var(meanBoot))
+  return(output)
 
 
 }

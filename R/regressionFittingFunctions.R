@@ -14,8 +14,8 @@ regressionFunction.NN=function(x,responses,extra=NULL)
   n=dim(x)[1]
   random=sample(1:n)
   nTrain=round(0.7*n)
-  xTrain=x[random[1:nTrain],]
-  responsesTrain=responses[random[1:nTrain],]
+  xTrain=x[random[1:nTrain],,drop=FALSE]
+  responsesTrain=responses[random[1:nTrain],,drop=FALSE]
   xValidation=x[random[-c(1:nTrain)],,drop=FALSE]
   responsesValidation=responses[random[-c(1:nTrain)],,drop=FALSE]
 
@@ -88,8 +88,8 @@ regressionFunction.SpAM=function(x,responses,extra=NULL)
   n=dim(x)[1]
   random=sample(1:n)
   nTrain=round(0.7*n)
-  xTrain=x[random[1:nTrain],]
-  responsesTrain=responses[random[1:nTrain],]
+  xTrain=x[random[1:nTrain],,drop=FALSE]
+  responsesTrain=responses[random[1:nTrain],,drop=FALSE]
   xValidation=x[random[-c(1:nTrain)],,drop=FALSE]
   responsesValidation=responses[random[-c(1:nTrain)],,drop=FALSE]
 
@@ -157,7 +157,12 @@ print.SpAM=function(regressionObject,bestI,nameCovariates)
 
   cat("\n")
 
-  bestS=t(sapply(regressionObject$fittedReg, function(x)x$whichCovariates)[,1:bestI])
+  if(length(regressionObject$fittedReg[[1]]$whichCovariates)==1)
+  {
+    bestS=t(sapply(regressionObject$fittedReg, function(x)x$whichCovariates)[1:bestI])
+  } else {
+    bestS=t(sapply(regressionObject$fittedReg, function(x)x$whichCovariates)[,1:bestI])
+  }
   freq=colMeans(bestS)
 
   table=data.frame(covariate=order(freq,decreasing = TRUE),frequency=sort(freq,decreasing =  TRUE))
@@ -192,8 +197,8 @@ regressionFunction.Series=function(x,responses,extra=NULL)
   n=dim(x)[1]
   random=sample(1:n)
   nTrain=round(0.7*n)
-  xTrain=x[random[1:nTrain],]
-  responsesTrain=responses[random[1:nTrain],]
+  xTrain=x[random[1:nTrain],,drop=FALSE]
+  responsesTrain=responses[random[1:nTrain],,drop=FALSE]
   xValidation=x[random[-c(1:nTrain)],,drop=FALSE]
   responsesValidation=responses[random[-c(1:nTrain)],,drop=FALSE]
 
@@ -231,7 +236,7 @@ regressionFunction.Series=function(x,responses,extra=NULL)
     lambda=eigenB$values
     U=Q%*%eigenB$vectors
 
-    basisX=Re(sqrt(nAll)*U[,1:nXMax])
+    basisX=Re(sqrt(nAll)*U[,1:nXMax,drop=FALSE])
     eigenValues=Re((lambda/nAll)[1:nXMax])
 
     coefficientsMatrix=1/nAll*t(responsesTrain)%*%basisX
@@ -243,7 +248,7 @@ regressionFunction.Series=function(x,responses,extra=NULL)
 
     errorsForEachReg=apply(as.matrix(1:nrow(coefficientsMatrix)),1,function(ii)
     {
-      coeff=coefficientsMatrix[ii,]
+      coeff=coefficientsMatrix[ii,,drop=FALSE]
       errors=apply(as.matrix(1:length(coeff)),1,function(kk)
       {
         betaHat=t(coeff[1:kk,drop=FALSE])
@@ -363,6 +368,7 @@ regressionFunction.Lasso=function(x,responses,extra=NULL)
 print.Lasso=function(regressionObject,bestI,nameCovariates)
 {
 
+
   whichCoefficients=t(apply(regressionObject$coefficients[-1,1:bestI],1,function(x)(abs(x)>1e-20)))
 
   freq=colMeans(whichCoefficients)
@@ -402,8 +408,8 @@ regressionFunction.Forest=function(x,responses,extra=NULL)
   n=dim(x)[1]
   random=sample(1:n)
   nTrain=round(0.7*n)
-  xTrain=x[random[1:nTrain],]
-  responsesTrain=responses[random[1:nTrain],]
+  xTrain=x[random[1:nTrain],,drop=FALSE]
+  responsesTrain=responses[random[1:nTrain],,drop=FALSE]
   xValidation=x[random[-c(1:nTrain)],,drop=FALSE]
   responsesValidation=responses[random[-c(1:nTrain)],,drop=FALSE]
 
@@ -453,8 +459,13 @@ regressionFunction.Forest=function(x,responses,extra=NULL)
 print.Forest=function(regressionObject,bestI,nameCovariates)
 {
 
-  importance=sapply(regressionObject$fittedReg,function(x)x$importance)[,1:bestI]
+  if(length(regressionObject$fittedReg[[1]]$importance)==1)
+  {
+    importance=t(sapply(regressionObject$fittedReg,function(x)x$importance)[1:bestI])
 
+  } else {
+    importance=sapply(regressionObject$fittedReg,function(x)x$importance)[,1:bestI]
+  }
   freq=rowMeans(importance)
 
   table=data.frame(covariate=order(freq,decreasing = TRUE),frequency=sort(freq,decreasing =  TRUE))
