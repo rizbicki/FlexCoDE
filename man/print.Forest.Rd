@@ -4,12 +4,14 @@
 \alias{print.Forest}
 \title{Print function for object of the class Forest}
 \usage{
-\method{print}{Forest}(regressionObject, bestI)
+\method{print}{Forest}(regressionObject, bestI, nameCovariates)
 }
 \arguments{
 \item{regressionObject}{of the class Forest}
 
 \item{bestI}{optimal number of expansion coefficients}
+
+\item{nameCovariates}{name of the covariates}
 }
 \value{
 prints characteristics of the regressions that were fitted

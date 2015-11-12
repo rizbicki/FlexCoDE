@@ -16,7 +16,8 @@ Imports: glmnet,
     grid,
     gridExtra,
     quadprog,
-    splines
+    splines,
+    kernlab
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr

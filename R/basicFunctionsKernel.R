@@ -1,3 +1,5 @@
+
+
 #' FlexCoDE Fit Conditional Density Estimation via Regression
 #'
 #' @param xTrain Covariates x used to train the model (one observation per row)
@@ -27,46 +29,41 @@
 #' \item{bestDelta}{Optimal value of threshold delta according to validation set}
 #' \item{estimatedRisk}{(If user provides xTest and zTest) Estimated risk (error) according to test set)}
 #'
-#' @example ../testPackage.R
+#' @example ../testPackageKernel.R
 #'
 #' @export
-fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,system="Fourier",deltaGrid=seq(0,0.4,0.05),chooseDelta=TRUE,verbose=TRUE)
+fitFlexCoDEKernel=function(kernelTrainTrain,zTrain,kernelValidationTrain,zValidation,kernelTestTrain=NULL,zTest=NULL,nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,system="Fourier",deltaGrid=seq(0,0.4,0.05),chooseDelta=TRUE,verbose=TRUE)
 {
-  if(is.vector(xTrain))
-    xTrain=as.matrix(xTrain)
-
-  if(is.vector(xValidation))
-    xValidation=as.matrix(xValidation)
-
-  if(is.vector(xTest))
-    xTest=as.matrix(xTest)
 
   objectCDE=NULL
   objectCDE$zMax=max(zTrain)
   objectCDE$zMin=min(zTrain)
   zTrain=(zTrain-objectCDE$zMin)/(objectCDE$zMax-objectCDE$zMin)
 
-  class(objectCDE)="FlexCoDE"
+  class(objectCDE)="FlexCoDEKernel"
   objectCDE$verbose=verbose
 
   if(verbose) print("Transforming Response")
   responseFourier=calculateBasis(zTrain,nIMax,system)
   if(verbose) print("Fitting Regression Functions")
-  regressionObject=regressionFunction(x=xTrain,responses=responseFourier,extra=regressionFunction.extra)
+  regressionObject=regressionFunction(kernelX=kernelTrainTrain,
+                                      responses=responseFourier,
+                                      extra=regressionFunction.extra)
   objectCDE$nIMax=nIMax
   objectCDE$system=system
   objectCDE$zTrain=zTrain
-  objectCDE$xTrain=xTrain
   objectCDE$regressionObject=regressionObject
-  rm(regressionObject,xTrain,zTrain,responseFourier)
+  rm(regressionObject,kernelTrainTrain,zTrain,responseFourier)
   gc(verbose = FALSE)
 
   zValidation=(zValidation-objectCDE$zMin)/(objectCDE$zMax-objectCDE$zMin)
 
-  basisZValidation=calculateBasis(zValidation,objectCDE$nIMax,objectCDE$system) # returns matrix length(z)xnIMax with the basis for z
+  basisZValidation=calculateBasis(zValidation,
+                                  objectCDE$nIMax,objectCDE$system) # returns matrix length(z)xnIMax with the basis for z
 
   if(verbose) print("Tuning Number of Expansion Coefficients (I)")
-  coefficientsXValidation=predict(objectCDE$regressionObject,xValidation)
+  coefficientsXValidation=predict(objectCDE$regressionObject,
+                                  kernelValidationTrain)
   term1=1/2*colMeans(coefficientsXValidation^2)
   term1=cumsum(term1)
 
@@ -79,23 +76,21 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   if(chooseDelta)
   {
     if(verbose) print("Choosing optimal cutoff Delta")
-    delta=chooseDelta(objectCDE, xValidation,objectCDE$zMin+(objectCDE$zMax-objectCDE$zMin)*zValidation,deltaGrid)
+    delta=chooseDeltaKernel(objectCDE, kernelValidationTrain,objectCDE$zMin+(objectCDE$zMax-objectCDE$zMin)*zValidation,deltaGrid)
     objectCDE$bestDelta=delta
   } else {
     objectCDE$bestDelta=0
   }
 
-  if(!is.null(xTest)&!is.null(zTest))
+  if(!is.null(kernelTestTrain)&!is.null(zTest))
   {
     if(verbose) print("Estimating risk on test set")
-    error=estimateErrorFlexCoDE(objectCDE,xTest,zTest,se=TRUE)
+    error=estimateErrorFlexCoDEKernel(objectCDE,kernelTestTrain,zTest,se=TRUE)
     objectCDE$estimatedRisk=error
   }
 
   if(objectCDE$bestI==objectCDE$nIMax)
     warning("\n the optimal I found was exactly nIMax; try increasing nIMax if you want to improve performance")
-
-  objectCDE$covariateNames=colnames(xTrain)
 
   return(objectCDE)
 }
@@ -109,21 +104,19 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 #' @param zValidation Responses z used to validate (tune) the model  (matrix with 1 column). Each row corresponds to a row of the xValidation argument
 #'
 #' @return Best delta
-chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.05))
+chooseDeltaKernel = function(objectCDE, kernelValidationTrain,
+                             zValidation,deltaGrid=seq(0,0.4,0.05))
 {
-
-  if(is.vector(xValidation))
-    xValidation=as.matrix(xValidation)
-
-  if(class(objectCDE)!='FlexCoDE')
-    stop("objectCDE should be of class FlexCoDE")
+  if(class(objectCDE)!='FlexCoDEKernel')
+    stop("objectCDE should be of class FlexCoDEKernel")
   error=rep(NA,length(deltaGrid))
   if(objectCDE$verbose) cat("\n Progress Bar:\n")
   for(ii in 1:length(deltaGrid))
   {
     if(objectCDE$verbose) cat(paste(c(rep("|",ii),rep(" ",length(deltaGrid)-ii),"|\n"),collapse=""))
     objectCDE$bestDelta=deltaGrid[ii]
-    estimateErrors=estimateErrorFlexCoDE(objectCDE=objectCDE,xTest=xValidation,zTest=zValidation,se=FALSE)
+    estimateErrors=estimateErrorFlexCoDEKernel(objectCDE=objectCDE,
+                                               kernelTestTrain=kernelValidationTrain,zTest=zValidation,se=FALSE)
     error[ii]=estimateErrors
   }
   #plot(error)
@@ -143,18 +136,16 @@ chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.
 #' @return Estimated error (with SE if desired)
 #' @export
 #'
-estimateErrorFlexCoDE=function(objectCDE,xTest,zTest,se=TRUE)
+estimateErrorFlexCoDEKernel=function(objectCDE,kernelTestTrain,zTest,se=TRUE)
 {
-  if(class(objectCDE)!="FlexCoDE")
-    stop("objectCDE should be of class FlexCoDE")
+  if(class(objectCDE)!="FlexCoDEKernel")
+    stop("objectCDE should be of class FlexCoDEKernel")
 
-  if(is.vector(xTest))
-    xTest=as.matrix(xTest)
 
 
   zGrid=seq(objectCDE$zMin[1],objectCDE$zMax[1],length.out=500)
 
-  predictedComplete=predict(objectCDE,xNew = xTest,B=length(zGrid))
+  predictedComplete=predict(objectCDE,kernelNewTrain = kernelTestTrain,B=length(zGrid))
   predictedComplete=predictedComplete$CDE*(objectCDE$zMax-objectCDE$zMin)
 
   colmeansComplete=colMeans(predictedComplete^2)
@@ -210,20 +201,17 @@ estimateErrorFlexCoDE=function(objectCDE,xTest,zTest,se=TRUE)
 #'
 #' @export
 #'
-predict.FlexCoDE=function(objectCDE,xNew,B=1000)
+predict.FlexCoDEKernel=function(objectCDE,kernelNewTrain,B=1000)
 {
 
-  if(is.vector(xNew))
-    xNew=as.matrix(xNew)
-
-  if(class(objectCDE)!="FlexCoDE")
-    stop("Object should be of type FlexCoDE")
+  if(class(objectCDE)!="FlexCoDEKernel")
+    stop("Object should be of type FlexCoDEKernel")
   zGrid=seq(from=0,to=1,length.out=B)
 
   if(is.null(objectCDE$bestI))
     objectCDE$bestI=objectCDE$nIMax
 
-  coeff=predict(objectCDE$regressionObject,xNew,maxTerms=objectCDE$bestI)
+  coeff=predict(objectCDE$regressionObject,kernelNewTrain,maxTerms=objectCDE$bestI)
 
   basisZNew=calculateBasis(zGrid,objectCDE$bestI,objectCDE$system) # returns matrix length(z)xnIMax with the basis for z
 
@@ -253,11 +241,11 @@ predict.FlexCoDE=function(objectCDE,xNew,B=1000)
 #'
 #' @export
 #'
-print.FlexCoDE=function(objectCDE)
+print.FlexCoDEKernel=function(objectCDE)
 {
-  if(class(objectCDE)!="FlexCoDE")
-    stop("Object should be of class FlexCoDE")
-  cat("FlexCoDE - Flexible Conditional Density Estimator \n \n \n")
+  if(class(objectCDE)!="FlexCoDEKernel")
+    stop("Object should be of class FlexCoDEKernel")
+  cat("FlexCoDE - Kernel Flexible Conditional Density Estimator \n \n \n")
   cat("####### Caracteristic of the fitted CDE:\n\n")
   cat(paste("Regression Method Used:",class(objectCDE$regressionObject)),"\n")
 
@@ -289,26 +277,23 @@ print.FlexCoDE=function(objectCDE)
 #'
 #' @export
 #'
-plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
+plot.FlexCoDEKernel=function(objectCDE,kernelTestTrain,zTest,nPlots=min(nrow(kernelTestTrain),8),fontSize=12,lineWidth=1)
 {
-  if(is.vector(xTest))
-    xTest=as.matrix(xTest)
 
-
-  if(is.null(xTest))
-    stop("Please provide xTest")
+  if(is.null(kernelTestTrain))
+    stop("Please provide kernelTestTrain")
 
 
   if(is.null(zTest))
     stop("Please provide zTest")
 
-  if(class(objectCDE)!="FlexCoDE")
-    stop("objectCDE needs to be of class FlexCoDE")
+  if(class(objectCDE)!="FlexCoDEKernel")
+    stop("objectCDE needs to be of class FlexCoDEKernel")
   if(objectCDE$verbose)  print("Calculating predicted values")
-  predictedValues=predict(objectCDE,xTest,B=500)
+  predictedValues=predict(objectCDE,kernelTestTrain,B=500)
 
 
-  randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
+  randomOrder=sample(1:nrow(kernelTestTrain),nPlots,replace=FALSE)
   if(objectCDE$verbose) print("Creating plots")
 
 
@@ -347,33 +332,31 @@ plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=
 #' @examples # See \code{\link{bindFlexCoDE}}
 #'
 #' @export
-plot.FlexCoDE_binded=function(objectCDE_binded,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
+plot.FlexCoDE_bindedKernel=function(objectCDE_binded,kernelTestTrain,zTest,nPlots=min(nrow(kernelTestTrain),8),fontSize=12,lineWidth=1)
 {
 
-  if(is.vector(xTest))
-    xTest=as.matrix(xTest)
 
-  if(is.null(xTest))
-    stop("Please provide xTest")
+  if(is.null(kernelTestTrain))
+    stop("Please provide kernelTestTrain")
 
 
   if(is.null(zTest))
     stop("Please provide zTest")
 
-  if(class(objectCDE_binded)!="FlexCoDE_binded")
-    stop("objectCDE_binded needs to be of class FlexCoDE_binded")
+  if(class(objectCDE_binded)!="FlexCoDE_bindedKernel")
+    stop("objectCDE_binded needs to be of class FlexCoDE_bindedKernel")
   if(objectCDE_binded[[1]]$verbose)  print("Calculating predicted values")
 
   predictedValues=list()
   for(b in 1:length(objectCDE_binded))
   {
-    predictedValues[[b]]=predict(objectCDE_binded[[b]],xTest,B=500)
+    predictedValues[[b]]=predict(objectCDE_binded[[b]],kernelTestTrain,B=500)
   }
 
 
   namesEstimators=sapply(objectCDE_binded, function(x)
     class(x$regressionObject))
-  randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
+  randomOrder=sample(1:nrow(kernelTestTrain),nPlots,replace=FALSE)
 
   if(objectCDE_binded[[1]]$verbose)  print("Creating plots")
 
@@ -411,10 +394,12 @@ plot.FlexCoDE_binded=function(objectCDE_binded,xTest,zTest,nPlots=min(nrow(xTest
 #'
 #' @export
 #'
-bindFlexCoDE=function(objectCDE1,objectCDE2,...)
+bindFlexCoDEKernel=function(objectCDE1,objectCDE2,...)
 {
+  if(class(objectCDE1)!="FlexCoDEKernel")
+    stop("All objects should be of type FlexCoDEKernel")
   returnValue=append(list(objectCDE1,objectCDE2),list(...))
-  class(returnValue)="FlexCoDE_binded"
+  class(returnValue)="FlexCoDE_bindedKernel"
   return(returnValue)
 }
 
@@ -432,20 +417,15 @@ bindFlexCoDE=function(objectCDE1,objectCDE2,...)
 #' @example ../testPackageCombined.R
 #'
 #' @export
-combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation,xTest=NULL,zTest=NULL)
+combineFlexCoDE=function(objectCDE_binded,kernelValidationTrain,zValidation,kernelTestTrain=NULL,zTest=NULL)
 {
 
-
-  if(is.vector(xValidation))
-    xValidation=as.matrix(xValidation)
-
-
-  if(class(objectCDE_binded)!="FlexCoDE_binded")
-    stop("Class of objectCDE_binded should be FlexCoDE_binded")
+  if(class(objectCDE_binded)!="FlexCoDE_bindedKernel")
+    stop("Class of objectCDE_binded should be FlexCoDE_bindedKernel")
   predictedValues=list()
   for(b in 1:length(objectCDE_binded))
   {
-    predictedValues[[b]]=predict(objectCDE_binded[[b]],xValidation,B=500)
+    predictedValues[[b]]=predict(objectCDE_binded[[b]],kernelValidationTrain,B=500)
   }
 
   grid=predictedValues[[1]]$z
@@ -481,15 +461,15 @@ combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation,xTest=NULL,zTe
 
 
   returnValue=list(objectCDEs=objectCDE_binded,weights=weights$solution)
-  class(returnValue)="combinedFlexCoDE"
+  class(returnValue)="combinedFlexCoDEKernel"
 
   rm(objectCDE_binded)
   gc(verbose = FALSE)
 
-  if(!is.null(xTest)&!is.null(zTest))
+  if(!is.null(kernelTestTrain)&!is.null(zTest))
   {
     if(returnValue$objectCDEs[[1]]$verbose) print("Estimating risk on test set")
-    error=estimateErrorCombined(returnValue,xTest,zTest,se=TRUE)
+    error=estimateErrorCombined(returnValue,kernelTestTrain,zTest,se=TRUE)
     returnValue$estimatedRisk=error
   }
 
@@ -509,19 +489,15 @@ combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation,xTest=NULL,zTe
 #' @export
 #'
 #' @examples # See \code{\link{combineFlexCoDE}}
-predict.combinedFlexCoDE=function(objectCombined,xNew,B=1000)
+predict.combinedFlexCoDE=function(objectCombined,kernelNewTrain,B=1000)
 {
-  if(class(objectCombined)!="combinedFlexCoDE")
-    stop("objectCombined should be of class combinedFlexCoDE")
-
-
-  if(is.vector(xNew))
-    xNew=as.matrix(xNew)
+  if(class(objectCombined)!="combinedFlexCoDEKernel")
+    stop("objectCombined should be of class combinedFlexCoDEKernel")
 
   predictedValues=list()
   for(b in 1:length(objectCombined$objectCDEs))
   {
-    predictedValues[[b]]=predict(objectCombined$objectCDEs[[b]],xNew,B=500)
+    predictedValues[[b]]=predict(objectCombined$objectCDEs[[b]],kernelNewTrain,B=500)
   }
 
   grid=predictedValues[[1]]$z
@@ -551,11 +527,10 @@ predict.combinedFlexCoDE=function(objectCombined,xNew,B=1000)
 #'
 print.combinedFlexCoDE=function(objectCombined)
 {
-  if(class(objectCombined)!="combinedFlexCoDE")
-    stop("objectCombined should be of class combinedFlexCoDE")
+  if(class(objectCombined)!="combinedFlexCoDEKernel")
+    stop("objectCombined should be of class combinedFlexCoDEKernel")
 
-
-  cat("Object of class combinedFlexCoDE containing",length(objectCombined$weights),"fitted FlexCoDE regression estimators with weights \n ",objectCombined$weights,"\n respectively \n")
+  cat("Object of class combinedFlexCoDEKernel containing",length(objectCombined$weights),"fitted FlexCoDE regression estimators with weights \n ",objectCombined$weights,"\n respectively \n")
   cat("\n Estimators use the following regression methods respectively: \n")
   for(i in 1:length(objectCombined$weights))
   {
@@ -593,24 +568,22 @@ print.combinedFlexCoDE=function(objectCombined)
 #' @export
 #'
 #' @examples # See \code{\link{combineFlexCoDE}}
-plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
+plot.combinedFlexCoDE=function(objectCombined,kernelTestTrain,zTest,nPlots=min(nrow(kernelTestTrain),8),fontSize=12,lineWidth=1)
 {
 
-  if(is.vector(xTest))
-    xTest=as.matrix(xTest)
 
-
-  if(is.null(xTest))
-    stop("Please provide xTest")
+  if(is.null(kernelTestTrain))
+    stop("Please provide kernelTestTrain")
 
 
   if(is.null(zTest))
     stop("Please provide zTest")
 
-  if(class(objectCombined)!="combinedFlexCoDE")
-    stop("objectCDE needs to be of class combinedFlexCoDE")
+  if(class(objectCombined)!="combinedFlexCoDEKernel")
+    stop("objectCDE needs to be of class combinedFlexCoDEKernel")
+
   if(objectCombined$objectCDEs[[1]]$verbose)  print("Calculating predicted values")
-  predictedValues=predict(objectCombined,xTest,B=500)
+  predictedValues=predict(objectCombined,kernelTestTrain,B=500)
 
   randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
   if(objectCombined$objectCDEs[[1]]$verbose) print("Creating plots")
@@ -644,18 +617,15 @@ plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest)
 #' @return Estimated error (with SE if desired)
 #' @export
 #'
-estimateErrorCombined=function(objectCombined,xTest,zTest,se=TRUE)
+estimateErrorCombined=function(objectCombined,kernelTestTrain,zTest,se=TRUE)
 {
 
-  if(is.vector(xTest))
-    xTest=as.matrix(xTest)
-
-  if(class(objectCombined)!="combinedFlexCoDE")
-    stop("objectCombined should be of class combinedFlexCoDE")
+  if(class(objectCombined)!="combinedFlexCoDEKernel")
+    stop("objectCombined should be of class combinedFlexCoDEKernel")
 
   zGrid=seq(objectCombined$objectCDEs[[1]]$zMin[1],objectCombined$objectCDEs[[1]]$zMax,length.out=500)
 
-  predictedComplete=predict(objectCombined,xNew = xTest,B=length(zGrid))
+  predictedComplete=predict(objectCombined,xNew = kernelTestTrain,B=length(zGrid))
   predictedComplete=predictedComplete$CDE*(objectCombined$objectCDEs[[1]]$zMax-objectCombined$objectCDEs[[1]]$zMin)
 
   colmeansComplete=colMeans(predictedComplete^2)

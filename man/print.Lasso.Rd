@@ -4,12 +4,14 @@
 \alias{print.Lasso}
 \title{Print function for object of the class Lasso}
 \usage{
-\method{print}{Lasso}(regressionObject, bestI)
+\method{print}{Lasso}(regressionObject, bestI, nameCovariates)
 }
 \arguments{
 \item{regressionObject}{of the class Lasso}
 
 \item{bestI}{optimal number of expansion coefficients}
+
+\item{nameCovariates}{name of the covariates}
 }
 \value{
 prints characteristics of the regressions that were fitted

@@ -4,7 +4,7 @@
 \alias{predict.Series}
 \title{Predict Series regression}
 \usage{
-\method{predict}{Series}(object, xNew, maxTerms = NULL)
+predict.Series(object, xNew, maxTerms = NULL)
 }
 \arguments{
 \item{object}{object of the class Series}

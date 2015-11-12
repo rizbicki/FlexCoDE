@@ -4,12 +4,14 @@
 \alias{print.NN}
 \title{Print function for object of the class NN}
 \usage{
-\method{print}{NN}(regressionObject, bestI)
+\method{print}{NN}(regressionObject, bestI, nameCovariates)
 }
 \arguments{
 \item{regressionObject}{of the class NN}
 
 \item{bestI}{optimal number of expansion coefficients}
+
+\item{nameCovariates}{name of the covariates}
 }
 \value{
 prints characteristics of the regressions that were fitted

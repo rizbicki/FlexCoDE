@@ -4,7 +4,7 @@
 \alias{plot.FlexCoDE}
 \title{Plots examples of estimated densities together with real response}
 \usage{
-\method{plot}{FlexCoDE}(objectCDE, xTest, zTest, nPlots = min(nrow(xTest), 8),
+plot.FlexCoDE(objectCDE, xTest, zTest, nPlots = min(nrow(xTest), 8),
   fontSize = 12, lineWidth = 1)
 }
 \arguments{

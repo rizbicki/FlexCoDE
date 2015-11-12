@@ -4,12 +4,14 @@
 \alias{print.Series}
 \title{Print function for object of the class Series}
 \usage{
-\method{print}{Series}(regressionObject, bestI)
+\method{print}{Series}(regressionObject, bestI, nameCovariates)
 }
 \arguments{
 \item{regressionObject}{of the class Series}
 
 \item{bestI}{optimal number of expansion coefficients}
+
+\item{nameCovariates}{name of the covariates}
 }
 \value{
 prints characteristics of the regressions that were fitted
