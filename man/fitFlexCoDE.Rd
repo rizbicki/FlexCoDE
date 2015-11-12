@@ -81,7 +81,7 @@ zTest=data[randomIndex[(nTrain+nValidation+1):n],d+1]
 ###### fit NN estimator (not appropriate for sparse structure)
 ############################################################
 fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
-            nIMax = 20,regressionFunction = regressionFunction.NN)
+                nIMax = 20,regressionFunction = regressionFunction.NN)
 fit$estimatedRisk
 print(fit)
 
