@@ -34,8 +34,18 @@ zTrain=data[randomIndex[1:nTrain],d+1]
 zValidation=data[randomIndex[(nTrain+1):(nTrain+nValidation)],d+1]
 zTest=data[randomIndex[(nTrain+nValidation+1):n],d+1]
 
+# Fit nearest neighbors FlexCoDE
 fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
             nIMax = 20,regressionFunction = regressionFunction.NN)
 fit$estimatedRisk
 print(fit)
+plot(fit,xTest,zTest)
+
+# Fit sparse additive FlexCoDE
+fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
+            nIMax = 30,regressionFunction = regressionFunction.SpAM)
+fit$estimatedRisk
+print(fit)
+plot(fit,xTest,zTest)
+
 ```
