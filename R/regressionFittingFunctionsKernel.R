@@ -2,7 +2,7 @@
 #'
 #' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @param x matrix with covariates that will be used for training
+#' @param kernelX matrix with covariates that will be used for training
 #' @param responses matrix where each column is a response for the training data
 #' @param extra list with one component named nNeighVec, which contains a vetor with different number of neighbors; the function will choose the best value among them
 #'
@@ -89,7 +89,7 @@ print.NNKernel=function(regressionObject,bestI,nameCovariates)
 #'
 #' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @param x matrix with covariates that will be used for training
+#' @param kernelX matrix with covariates that will be used for training
 #' @param responses matrix where each column is a response for the training data
 #' @param extra list with two components: the first is named epsGrid, which contains a vetor with different number of bandwidths to be used in the gaussian kernel; the function will choose the best value among them; the second is called nXMax and contains a single integer number that describes what is the maximum number of spectral basis functions with be used
 #'
@@ -241,11 +241,37 @@ regressionFunction.SDMKernel=function(kernelX,responses,extra=NULL)
     eps=seq(0.1,1,length.out = 5)
 
 
-  fittedReg=list()
-  fittedReg[[1]]=1
-  errors=matrix(NA,length(C),length(eps))
-  for(i in 2:ncol(responses))
-  {
+  # fittedReg=list()
+  # fittedReg[[1]]=1
+  # errors=matrix(NA,length(C),length(eps))
+  # for(i in 2:ncol(responses))
+  # {
+  #   for(j in 1:length(C))
+  #   {
+  #     for(k in 1:length(eps))
+  #     {
+  #       fit=try(kernlab::ksvm(x=kernelX,y=responses[,i],type="eps-svr",kernel="matrix",cross=2,epsilon=eps[k],C=C[j]),silent = TRUE)
+  #       if(class(fit)=="try-error")
+  #         next;
+  #       errors[j,k]=fit@error
+  #     }
+  #   }
+  #   which=which(errors==min(errors),arr.ind = TRUE)
+  #   fittedReg[[i]]=kernlab::ksvm(x=kernelX,y=responses[,i],type="eps-svr",kernel="matrix",cross=2,epsilon=eps[which[2]],C=C[which[1]])
+  # }
+  #
+
+
+  nCores=extra$nCores
+  if(is.null(nCores))
+    nCores=1
+
+  cl <- parallel::makeCluster(nCores)
+  doParallel::registerDoParallel(cl)
+
+
+  fittedReg <- foreach(i=2:ncol(responses)) %dopar% {
+    errors=matrix(NA,length(C),length(eps))
     for(j in 1:length(C))
     {
       for(k in 1:length(eps))
@@ -257,8 +283,12 @@ regressionFunction.SDMKernel=function(kernelX,responses,extra=NULL)
       }
     }
     which=which(errors==min(errors),arr.ind = TRUE)
-    fittedReg[[i]]=kernlab::ksvm(x=kernelX,y=responses[,i],type="eps-svr",kernel="matrix",cross=2,epsilon=eps[which[2]],C=C[which[1]])
+    return(kernlab::ksvm(x=kernelX,y=responses[,i],type="eps-svr",kernel="matrix",cross=2,epsilon=eps[which[2]],C=C[which[1]]))
   }
+
+  parallel::stopCluster(cl)
+
+  fittedReg=append(1,fittedReg)
 
   regressionObject=NULL
   regressionObject$fittedReg=fittedReg

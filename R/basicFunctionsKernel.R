@@ -196,12 +196,13 @@ estimateErrorFlexCoDEKernel=function(objectCDE,kernelTestTrain,zTest,se=TRUE)
 #' @return The return value is an object with the following components
 #' \item{z}{Points where the density was evaluate}
 #' \item{CDE }{Matrix with value of the density at points z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
+#' \item{th}{(If predictionBandProb is not FALSE) Threshold values for each estimated density. The region where estimated densities are above these values have the approximate coverage probability desired. See  \code{\link{plot.FlexCoDE}} for ploting these regions.}
 #'
 #' @examples # See \code{\link{fitFlexCoDE}}
 #'
 #' @export
 #'
-predict.FlexCoDEKernel=function(objectCDE,kernelNewTrain,B=1000)
+predict.FlexCoDEKernel=function(objectCDE,kernelNewTrain,B=1000,predictionBandProb=FALSE)
 {
 
   if(class(objectCDE)!="FlexCoDEKernel")
@@ -229,8 +230,53 @@ predict.FlexCoDEKernel=function(objectCDE,kernelNewTrain,B=1000)
   returnValue$CDE=estimates
   returnValue$z=seq(from=objectCDE$zMin,to=objectCDE$zMax,length.out=B)
 
+  if(predictionBandProb==FALSE)
+    return(returnValue)
 
+
+  th=matrix(NA,nrow(returnValue$CDE),1)
+  for(i in 1:nrow(returnValue$CDE))
+  {
+
+    th[i]=.findThresholdHPD((objectCDE$zMax-objectCDE$zMin)/B,returnValue$CDE[i,],predictionBandProb)
+
+
+  }
+
+  returnValue$th=th
   return(returnValue)
+
+  th=matrix(NA,nrow(returnValue$CDE),2)
+  for(i in 1:nrow(returnValue$CDE))
+  {
+    interval=.findThresholdSymmetricMode((objectCDE$zMax-objectCDE$zMin)/B,
+                                         returnValue$CDE[i,],
+                                         predictionBandProb)
+    intervalExtended=interval[1]:interval[2]
+    for(k in 1:length(intervalExtended))
+    {
+      if(returnValue$CDE[i,intervalExtended][k]==0)
+      {
+        interval[1]=interval[1]+1
+      } else {
+        break;
+      }
+    }
+    for(k in length(intervalExtended):1)
+    {
+      if(returnValue$CDE[i,intervalExtended][k]==0)
+      {
+        interval[2]=interval[2]-1
+      } else {
+        break;
+      }
+    }
+    th[i,1]=returnValue$z[interval[1]]
+    th[i,2]=returnValue$z[interval[2]]
+  }
+  returnValue$th=th
+  return(returnValue)
+
 }
 
 #' Print object of classe FlexCoDE
@@ -270,14 +316,15 @@ print.FlexCoDEKernel=function(objectCDE)
 #' @param nPlots Number of desired densities to be ploted (which will be picked at random). Default is minimum between 8 and number of testing points
 #' @param fontSize Font size of axis labels and legend
 #' @param lineWidth Line width of the curves to be ploted
-
+#' @param predictionBandProb Either a number indicating the probability for the highest predictive density region desired  or FALSE if bands are not desired. Default is FALSE
+#' @param lineWidthPred Line width of the prediction bands to be ploted
 #' @return Plot with estimated densities
 #'
 #' @examples # See \code{\link{fitFlexCoDE}}
 #'
 #' @export
 #'
-plot.FlexCoDEKernel=function(objectCDE,kernelTestTrain,zTest,nPlots=min(nrow(kernelTestTrain),8),fontSize=12,lineWidth=1)
+plot.FlexCoDEKernel=function(objectCDE,kernelTestTrain,zTest,nPlots=min(nrow(kernelTestTrain),9),fontSize=12,lineWidth=1,predictionBandProb=FALSE,lineWidthPred=0.6)
 {
 
   if(is.null(kernelTestTrain))
@@ -290,7 +337,7 @@ plot.FlexCoDEKernel=function(objectCDE,kernelTestTrain,zTest,nPlots=min(nrow(ker
   if(class(objectCDE)!="FlexCoDEKernel")
     stop("objectCDE needs to be of class FlexCoDEKernel")
   if(objectCDE$verbose)  print("Calculating predicted values")
-  predictedValues=predict(objectCDE,kernelTestTrain,B=500)
+  predictedValues=predict(objectCDE,kernelTestTrain,B=500,predictionBandProb=predictionBandProb)
 
 
   randomOrder=sample(1:nrow(kernelTestTrain),nPlots,replace=FALSE)
@@ -307,10 +354,51 @@ plot.FlexCoDEKernel=function(objectCDE,kernelTestTrain,zTest,nPlots=min(nrow(ker
     }
   }
 
-  ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth,color=2)+ggplot2::xlab("Response")+
+  g=ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth,color=2)+ggplot2::xlab("Response")+
     ggplot2::ylab("Estimated Density")+
     ggplot2::geom_vline(ggplot2::aes(xintercept=vertical),size=lineWidth)+
     ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))+ ggplot2::facet_wrap(~ dataPoint)
+  print(g)
+
+
+  if(predictionBandProb==FALSE)
+    return()
+
+  eps=0.35
+  k=nrow(kernelTestTrain)
+  plot(x=1:k,y=zTest,main="",ylab="Prediction Region",cex.main=1.4,cex.axis=1.4,cex.lab=1.4,cex=1.5,col=1,xaxt="n",xlim=c(0.5,k+0.5),pch=16,ylim=c(objectCDE$zMin,objectCDE$zMax),xlab="Sample",bty="l")
+  for(ii in 1:k)
+  {
+    whichLarger=predictedValues$CDE[ii,]>predictedValues$th[ii]
+    runs=rle(whichLarger>0)
+    nRuns=length(runs$values)
+
+    cumulative=cumsum(runs$lengths)
+    for(jj in 1:nRuns)
+    {
+      if(runs$values[jj]==TRUE)
+      {
+        if(jj==1)
+        {
+          lower=fit$zMin
+          upper=predictedValues$z[cumulative[jj]]
+          lines(c(ii,ii),c(lower,upper),col=1,lwd=lineWidthPred)
+          lines(c(ii-eps,ii+eps),c(lower,lower),col=1,lwd=lineWidthPred)
+          lines(c(ii-eps,ii+eps),c(upper,upper),col=1,lwd=lineWidthPred)
+          next;
+        }
+        #points(rep(ii,sum(whichLarger)),predicted$z[whichLarger],pch=18,cex=0.9,col=2)
+        lower=predictedValues$z[cumulative[jj-1]]
+        upper=predictedValues$z[cumulative[jj]]
+        lines(c(ii,ii),c(lower,upper),col=1,lwd=lineWidthPred)
+
+        lines(c(ii-eps,ii+eps),c(lower,lower),col=1,lwd=lineWidthPred)
+        lines(c(ii-eps,ii+eps),c(upper,upper),col=1,lwd=lineWidthPred)
+      }
+    }
+  }
+
+  points(x=1:k,y=zTest,main="",ylab="Estimate",cex.main=1.4,cex.axis=1.4,cex.lab=1.4,cex=1.5,col=1,xaxt="n",xlim=c(0.5,k+0.5),pch=16,ylim=c(min(zTrain),max(zTrain)),xlab="Sample")
 
 
 }
@@ -417,7 +505,7 @@ bindFlexCoDEKernel=function(objectCDE1,objectCDE2,...)
 #' @example ../testPackageCombined.R
 #'
 #' @export
-combineFlexCoDE=function(objectCDE_binded,kernelValidationTrain,zValidation,kernelTestTrain=NULL,zTest=NULL)
+combineFlexCoDEKernel=function(objectCDE_binded,kernelValidationTrain,zValidation,kernelTestTrain=NULL,zTest=NULL)
 {
 
   if(class(objectCDE_binded)!="FlexCoDE_bindedKernel")
@@ -489,7 +577,7 @@ combineFlexCoDE=function(objectCDE_binded,kernelValidationTrain,zValidation,kern
 #' @export
 #'
 #' @examples # See \code{\link{combineFlexCoDE}}
-predict.combinedFlexCoDE=function(objectCombined,kernelNewTrain,B=1000)
+predict.combinedFlexCoDEKernel=function(objectCombined,kernelNewTrain,B=1000)
 {
   if(class(objectCombined)!="combinedFlexCoDEKernel")
     stop("objectCombined should be of class combinedFlexCoDEKernel")
@@ -525,7 +613,7 @@ predict.combinedFlexCoDE=function(objectCombined,kernelNewTrain,B=1000)
 #' @return returns information regarding the fitted model
 #' @export
 #'
-print.combinedFlexCoDE=function(objectCombined)
+print.combinedFlexCoDEKernel=function(objectCombined)
 {
   if(class(objectCombined)!="combinedFlexCoDEKernel")
     stop("objectCombined should be of class combinedFlexCoDEKernel")
@@ -568,7 +656,7 @@ print.combinedFlexCoDE=function(objectCombined)
 #' @export
 #'
 #' @examples # See \code{\link{combineFlexCoDE}}
-plot.combinedFlexCoDE=function(objectCombined,kernelTestTrain,zTest,nPlots=min(nrow(kernelTestTrain),8),fontSize=12,lineWidth=1)
+plot.combinedFlexCoDEKernel=function(objectCombined,kernelTestTrain,zTest,nPlots=min(nrow(kernelTestTrain),8),fontSize=12,lineWidth=1)
 {
 
 
@@ -617,7 +705,7 @@ plot.combinedFlexCoDE=function(objectCombined,kernelTestTrain,zTest,nPlots=min(n
 #' @return Estimated error (with SE if desired)
 #' @export
 #'
-estimateErrorCombined=function(objectCombined,kernelTestTrain,zTest,se=TRUE)
+estimateErrorCombinedKernel=function(objectCombined,kernelTestTrain,zTest,se=TRUE)
 {
 
   if(class(objectCombined)!="combinedFlexCoDEKernel")

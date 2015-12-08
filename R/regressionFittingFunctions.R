@@ -68,18 +68,100 @@ print.NN=function(regressionObject,bestI,nameCovariates)
   cat(paste("Number of neighbors chosen for each fitted regression:",paste(regressionObject$bestNN[1:bestI],collapse=", "),"\n"))
 }
 
+
+
+#' Nadaraya Watson Regression
+#'
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
+#'
+#' @param x matrix with covariates that will be used for training
+#' @param responses matrix where each column is a response for the training data
+#' @param extra list with one component named epsGrid, which contains a vetor with different bandwidths; the function will choose the best value among them
+#'
+#' @return object of the class NN containing information need to perform prediction on new points
+#' @export
+regressionFunction.NW=function(x,responses,extra=NULL)
+{
+  # Both x and responses are matrices
+  n=dim(x)[1]
+  random=sample(1:n)
+  nTrain=round(0.7*n)
+  xTrain=x[random[1:nTrain],,drop=FALSE]
+  responsesTrain=responses[random[1:nTrain],,drop=FALSE]
+  xValidation=x[random[-c(1:nTrain)],,drop=FALSE]
+  responsesValidation=responses[random[-c(1:nTrain)],,drop=FALSE]
+
+  distanceValidationTrain=fields::rdist(xValidation,xTrain)
+
+  epsGrid=extra$epsGrid
+  if(is.null(epsGrid))
+    epsGrid=seq(median(distanceValidationTrain)/100,median(distanceValidationTrain),length.out = 20)
+
+
+
+  error=matrix(NA,length(epsGrid),dim(responsesTrain)[2])
+  for(ii in 1:length(epsGrid))
+  {
+    weights=exp(-(distanceValidationTrain/(epsGrid[ii]))^2)
+
+
+    isThereNa=apply(weights,1,function(xx){sum(is.na(xx))>0})
+    weights[isThereNa,]=1/ncol(weights)
+    weights=weights/ncol(weights)
+
+    predictedValidation=weights%*%responsesTrain
+
+    error[ii,]=colMeans((predictedValidation-responsesValidation)^2)
+  }
+
+  bestEps=apply(error,2,function(xx){
+    epsGrid[which.min(xx)]
+  })
+  rm(distanceValidationTrain)
+  gc(verbose = FALSE)
+
+  regressionObject=NULL
+  regressionObject$bestEps=bestEps
+  regressionObject$xTrain=x
+  regressionObject$responsesTrain=responses
+  class(regressionObject)="NW"
+  rm(xTrain,responsesTrain)
+  gc(verbose=FALSE)
+  return(regressionObject)
+}
+
+#' Print function for object of the class NW
+#'
+#' This function is typically not directly used by the user; it is used inside  \code{\link{print.FlexCoDE}}, the print
+#' method for the class FlexCoDE
+#'
+#' @param regressionObject of the class NW
+#' @param bestI optimal number of expansion coefficients
+#' @param nameCovariates name of the covariates
+#'
+#' @return prints characteristics of the regressions that were fitted
+#'
+print.NW=function(regressionObject,bestI,nameCovariates)
+{
+  cat(paste("Bandiwdth chosen for each fitted regression:",paste(regressionObject$bestEps[1:bestI],collapse=", "),"\n"))
+}
+
+
 #' SpAM Regression (Sparse Additive Model)
 #'
 #' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
 #' @param x matrix with covariates that will be used for training
 #' @param responses matrix where each column is a response for the training data
-#' @param extra list with one component named sVec, which contains a vetor with different number of splins; the function will choose the best value among them
+#' @param extra list with one component named sVec, which contains a vetor with different number of splins; the function will choose the best value among them. The list can also contain a component named
+#' nCores which contains the number of cores to be used for parallel computing. Default is one.
 #'
 #'
 #' @return object of the class SpAM containing information needed to perform prediction on new points
 #'
 #' @import SAM
+#' @import doParallel
+#' @import foreach
 #'
 #' @export
 regressionFunction.SpAM=function(x,responses,extra=NULL)
@@ -99,7 +181,15 @@ regressionFunction.SpAM=function(x,responses,extra=NULL)
     sVec=round(seq(1,14,length.out = 6))
 
 
-  fittedReg=apply(as.matrix(1:ncol(responsesTrain)),1,function(ii){
+  nCores=extra$nCores
+  if(is.null(nCores))
+    nCores=1
+
+  cl <- parallel::makeCluster(nCores)
+  doParallel::registerDoParallel(cl)
+
+
+  fittedReg <- foreach(ii=1:ncol(responsesTrain)) %dopar% {
 
     bestCol=bestError=rep(NA,length(sVec))
     for(s in 1:length(bestCol))
@@ -127,7 +217,12 @@ regressionFunction.SpAM=function(x,responses,extra=NULL)
     object$whichCovariates=fit$func_norm[,object$bestCol]>1e-23
 
     return(object)
-  })
+
+  }
+
+  parallel::stopCluster(cl)
+
+
 
   regressionObject=NULL
   regressionObject$fittedReg=fittedReg
@@ -159,7 +254,8 @@ print.SpAM=function(regressionObject,bestI,nameCovariates)
 
   if(length(regressionObject$fittedReg[[1]]$whichCovariates)==1)
   {
-    bestS=t(sapply(regressionObject$fittedReg, function(x)x$whichCovariates)[1:bestI])
+    #bestS=t(sapply(regressionObject$fittedReg, function(x)x$whichCovariates)[1:bestI])
+    return();
   } else {
     bestS=t(sapply(regressionObject$fittedReg, function(x)x$whichCovariates)[,1:bestI])
   }
@@ -397,7 +493,10 @@ print.Lasso=function(regressionObject,bestI,nameCovariates)
 #'
 #' @param x matrix with covariates that will be used for training
 #' @param responses matrix where each column is a response for the training data
-#' @param extra list with one components named p0Vec, which contains a vetor with different number of variables randomly sampled as candidates at each split of the forest regression (aka mtry in randomForest package); the function will choose the best value among them
+#' @param extra list with one components named p0Vec, which contains a vetor with different number of variables randomly sampled as candidates at each split of the forest regression (aka mtry in randomForest package); the function will choose the best value among them;  one component named ntree which contains the number of tree to be used by the forest (default is 500), and  one component named maxnodes which contains the number of f terminal nodes trees in the forest can have (if not given, trees are grown to the maximum possible). The list can also contain a component named
+#' nCores which contains the number of cores to be used for parallel computing. Default is one.
+#'
+#' @import randomForest
 #'
 #' @return object of the class Forest containing information needed to perform prediction on new points
 #' @export
@@ -417,19 +516,34 @@ regressionFunction.Forest=function(x,responses,extra=NULL)
   if(is.null(p0Vec))
     p0Vec=round(seq(1,ncol(xTrain),length.out = 5))
 
+  ntree=extra$ntree
+  if(is.null(ntree))
+    ntree=500
+
+  maxnodes=extra$maxnodes
+
+  nCores=extra$nCores
+  if(is.null(nCores))
+    nCores=1
+
+  cl <- parallel::makeCluster(nCores)
+  doParallel::registerDoParallel(cl)
 
 
-  fittedReg=apply(as.matrix(1:ncol(responsesTrain)),1,function(ii){
+  fittedReg <- foreach(ii=1:ncol(responsesTrain)) %dopar% {
     error=rep(NA,length(p0Vec))
     for(s in 1:length(p0Vec))
     {
-      ajuste = randomForest::randomForest(x=xTrain,y=responsesTrain[,ii,drop=FALSE],mtry=p0Vec[s],importance = FALSE)
+      ajuste = randomForest::randomForest(x=xTrain,
+                                          y=responsesTrain[,ii,drop=FALSE],
+                                          mtry=p0Vec[s],
+                                          importance = FALSE)
       predito = predict(ajuste, newdata = xValidation)
       error[s]=mean((predito-responsesValidation[,ii,drop=FALSE])^2)
     }
     bestP0=p0Vec[which.min(error)]
     #ajuste = randomForest(x=xTrain,y=responsesTrain[,ii,drop=FALSE],mtry=bestP0,importance = TRUE)
-    ajuste = randomForest::randomForest(x=x,y=responses[,ii,drop=FALSE],mtry=bestP0,importance = TRUE)
+    ajuste = randomForest::randomForest(x=x,y=responses[,ii,drop=FALSE],mtry=bestP0,importance = TRUE,ntree=ntree,maxnodes=maxnodes)
     object=NULL
     object$fit=ajuste
     object$importance=ajuste$importance[,1]
@@ -437,7 +551,9 @@ regressionFunction.Forest=function(x,responses,extra=NULL)
     object$errors=ajuste$mse
     gc(verbose=FALSE)
     return(object)
-  })
+  }
+
+  parallel::stopCluster(cl)
 
   regressionObject=NULL
   regressionObject$fittedReg=fittedReg
@@ -485,3 +601,5 @@ print.Forest=function(regressionObject,bestI,nameCovariates)
 
 
 }
+
+

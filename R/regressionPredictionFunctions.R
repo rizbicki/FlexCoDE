@@ -39,6 +39,52 @@ predict.NN=function(object,xNew,maxTerms=NULL)
   return(predictedValidation)
 }
 
+
+#' Predict NW regression
+#'
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
+#'
+#' @param object object of the class NW
+#' @param xNew matrix with covariates where prediction will be calculated
+#' @param maxTerms maximum number of expansion coefficients
+#'
+#' @return returns matrix where element (i,j) contains the estimate of the j-th expansion coefficient for the j-th sample
+#' @export
+#'
+predict.NW=function(object,xNew,maxTerms=NULL)
+{
+  if(class(object)!="NW")
+    stop("Object has wrong class, should be NW")
+
+  distanceNewTrain=fields::rdist(xNew,object$xTrain)
+
+  if(!is.null(maxTerms))
+  {
+    maxTerms=min(maxTerms,length(object$bestEps))
+  } else {
+    maxTerms=length(object$bestEps)
+  }
+
+  predictedValidation=matrix(NA,nrow(xNew),maxTerms)
+  for(kk in 1:maxTerms)
+  {
+
+    weights=exp(-(distanceNewTrain/(object$bestEps[kk]))^2)
+    weights=weights/rowSums(weights)
+    isThereNa=apply(weights,1,function(xx){sum(is.na(xx))>0})
+    weights[isThereNa,]=1/ncol(weights)
+
+    predictedValidation[,kk]=weights%*%object$responsesTrain[,kk,drop=F]
+  }
+
+
+  rm(distanceNewTrain)
+  gc(verbose = FALSE)
+
+  return(predictedValidation)
+}
+
+
 #' Predict SpAM regression
 #'
 #' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}

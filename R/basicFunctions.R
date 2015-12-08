@@ -8,7 +8,7 @@
 #' @param zTest Responses z used to estimate risk of final model  (matrix with one column; one observation per row). Default is NULL
 #' @param nIMax Maximum possible number of components of the series expansion (that is, the function will find the best I<nIMax). Default is 100
 #' @param regressionFunction a function indicating which regression method will be used to estimate the expansion coefficients. Currently can be one of
-#' @param regressionFunction.extra extra parameters to be sent to regression function; see the regression you want to use to check what are the available parameters
+#' @param regressionFunction.extra extra parameters to be sent to regression function; see the regression you want to use to check what are the available parameters. The argument nCores which contains the number of cores to be used for parallel computing. Default is one.
 #' @param system Basis for z. Current options are "Fourier", "Cosine" and "discrete". Default is "Fourier"
 #' @param chooseDelta Should delta, the cutoff to remove spurious bumps, be chosen?
 #' @param deltaGrid Grid of threshold deltas (betwen 0 and 0.5). Default value is seq(0,0.4,0.05).
@@ -30,7 +30,7 @@
 #' @example ../testPackage.R
 #'
 #' @export
-fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,system="Fourier",deltaGrid=seq(0,0.4,0.05),chooseDelta=TRUE,verbose=TRUE)
+fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,system="Fourier",deltaGrid=seq(0,0.45,length.out = 15),chooseDelta=TRUE,verbose=TRUE)
 {
   if(is.vector(xTrain))
     xTrain=as.matrix(xTrain)
@@ -78,8 +78,14 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 
   if(chooseDelta)
   {
+    nCores=regressionFunction.extra$nCores
+    if(is.null(nCores))
+      nCores=1
+
     if(verbose) print("Choosing optimal cutoff Delta")
-    delta=chooseDelta(objectCDE, xValidation,objectCDE$zMin+(objectCDE$zMax-objectCDE$zMin)*zValidation,deltaGrid)
+    delta=chooseDelta(objectCDE, xValidation,
+                      objectCDE$zMin+(objectCDE$zMax-objectCDE$zMin)*zValidation,deltaGrid,
+                      nCores)
     objectCDE$bestDelta=delta
   } else {
     objectCDE$bestDelta=0
@@ -107,9 +113,10 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 #' @param objectCDE An object of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand
 #' @param xValidation Covariates x used to validate (tune) the model (one x observation per row).
 #' @param zValidation Responses z used to validate (tune) the model  (matrix with 1 column). Each row corresponds to a row of the xValidation argument
+#' @param nCores Number of cores to be used for parallel computing. Default is one.
 #'
 #' @return Best delta
-chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.05))
+chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.05),nCores=1)
 {
 
   if(is.vector(xValidation))
@@ -118,17 +125,45 @@ chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.
   if(class(objectCDE)!='FlexCoDE')
     stop("objectCDE should be of class FlexCoDE")
   error=rep(NA,length(deltaGrid))
-  if(objectCDE$verbose) cat("\n Progress Bar:\n")
-  for(ii in 1:length(deltaGrid))
+
+  if(nCores==1)
   {
-    if(objectCDE$verbose) cat(paste(c(rep("|",ii),rep(" ",length(deltaGrid)-ii),"|\n"),collapse=""))
-    objectCDE$bestDelta=deltaGrid[ii]
-    estimateErrors=estimateErrorFlexCoDE(objectCDE=objectCDE,xTest=xValidation,zTest=zValidation,se=FALSE)
-    error[ii]=estimateErrors
+    if(objectCDE$verbose) cat("\n Progress Bar:\n")
+
+    for(ii in 1:length(deltaGrid))
+    {
+      if(objectCDE$verbose) cat(paste(c(rep("|",ii),rep(" ",length(deltaGrid)-ii),"|\n"),collapse=""))
+      objectCDE$bestDelta=deltaGrid[ii]
+      estimateErrors=estimateErrorFlexCoDE(objectCDE=objectCDE,
+                                           xTest=xValidation,
+                                           zTest=zValidation,se=FALSE)
+      error[ii]=estimateErrors
+    }
+    #plot(error)
+  } else {
+
+    cl <- parallel::makeCluster(nCores)
+    doParallel::registerDoParallel(cl)
+
+    packages=search()
+    packages=packages[grep("package:",packages)]
+    packages=sub("package:","",packages)
+    error <- foreach(ii=1:length(deltaGrid),.packages = packages) %dopar% {
+      objectCDE$bestDelta=deltaGrid[ii]
+      estimateErrors=estimateErrorFlexCoDE(objectCDE=objectCDE,
+                                           xTest=xValidation,
+                                           zTest=zValidation,se=FALSE)
+      return(estimateErrors)
+
+    }
+    error=sapply(error,function(x)x)
+
+    parallel::stopCluster(cl)
   }
-  #plot(error)
+
   whichMin=(1:length(error))[error==min(error)]
   bestDelta=deltaGrid[max(whichMin)]
+
   return(bestDelta)
 }
 
@@ -201,16 +236,18 @@ estimateErrorFlexCoDE=function(objectCDE,xTest,zTest,se=TRUE)
 #' @param objectCDE Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand
 #' @param xNew Matrix with nTest rows and same number of columns as xTrain, containing x's for which the estimates are desired.
 #' @param B Number of point where f(z|x) will be evaluated (on the z scale). This will be equally spaced between zMin and zMax
+#' @param predictionBandProb Either a number indicating the probability for the highest predictive density region desired  or FALSE if bands are not desired. Default is FALSE
 #'
 #' @return The return value is an object with the following components
 #' \item{z}{Points where the density was evaluate}
-#' \item{CDE }{Matrix with value of the density at points z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
+#' \item{CDE}{Matrix with value of the density at points z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
+#' \item{th}{(If predictionBandProb is not FALSE) Threshold values for each estimated density. The region where estimated densities are above these values have the approximate coverage probability desired. See  \code{\link{plot.FlexCoDE}} for ploting these regions.}
 #'
 #' @examples # See \code{\link{fitFlexCoDE}}
 #'
 #' @export
 #'
-predict.FlexCoDE=function(objectCDE,xNew,B=1000)
+predict.FlexCoDE=function(objectCDE,xNew,B=1000,predictionBandProb=FALSE)
 {
 
   if(is.vector(xNew))
@@ -241,8 +278,53 @@ predict.FlexCoDE=function(objectCDE,xNew,B=1000)
   returnValue$CDE=estimates
   returnValue$z=seq(from=objectCDE$zMin,to=objectCDE$zMax,length.out=B)
 
+  if(predictionBandProb==FALSE)
+    return(returnValue)
 
+
+  th=matrix(NA,nrow(returnValue$CDE),1)
+  for(i in 1:nrow(returnValue$CDE))
+  {
+
+    th[i]=.findThresholdHPD((objectCDE$zMax-objectCDE$zMin)/B,returnValue$CDE[i,],predictionBandProb)
+
+
+  }
+
+  returnValue$th=th
   return(returnValue)
+
+  th=matrix(NA,nrow(returnValue$CDE),2)
+  for(i in 1:nrow(returnValue$CDE))
+  {
+    interval=.findThresholdSymmetricMode((objectCDE$zMax-objectCDE$zMin)/B,
+                                         returnValue$CDE[i,],
+                                         predictionBandProb)
+    intervalExtended=interval[1]:interval[2]
+    for(k in 1:length(intervalExtended))
+    {
+      if(returnValue$CDE[i,intervalExtended][k]==0)
+      {
+        interval[1]=interval[1]+1
+      } else {
+        break;
+      }
+    }
+    for(k in length(intervalExtended):1)
+    {
+      if(returnValue$CDE[i,intervalExtended][k]==0)
+      {
+        interval[2]=interval[2]-1
+      } else {
+        break;
+      }
+    }
+    th[i,1]=returnValue$z[interval[1]]
+    th[i,2]=returnValue$z[interval[2]]
+  }
+  returnValue$th=th
+  return(returnValue)
+
 }
 
 #' Print object of classe FlexCoDE
@@ -282,14 +364,16 @@ print.FlexCoDE=function(objectCDE)
 #' @param nPlots Number of desired densities to be ploted (which will be picked at random). Default is minimum between 8 and number of testing points
 #' @param fontSize Font size of axis labels and legend
 #' @param lineWidth Line width of the curves to be ploted
-
+#' @param predictionBandProb Either a number indicating the probability for the highest predictive density region desired  or FALSE if bands are not desired. Default is FALSE
+#' @param lineWidthPred Line width of the prediction bands to be ploted
+#'
 #' @return Plot with estimated densities
 #'
 #' @examples # See \code{\link{fitFlexCoDE}}
 #'
 #' @export
 #'
-plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
+plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),9),fontSize=12,lineWidth=1,predictionBandProb=FALSE,lineWidthPred=0.6)
 {
   if(is.vector(xTest))
     xTest=as.matrix(xTest)
@@ -305,7 +389,7 @@ plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=
   if(class(objectCDE)!="FlexCoDE")
     stop("objectCDE needs to be of class FlexCoDE")
   if(objectCDE$verbose)  print("Calculating predicted values")
-  predictedValues=predict(objectCDE,xTest,B=500)
+  predictedValues=predict(objectCDE,xTest,B=500,predictionBandProb=predictionBandProb)
 
 
   randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
@@ -322,10 +406,50 @@ plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=
     }
   }
 
-  ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth,color=2)+ggplot2::xlab("Response")+
+  g=ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth,color=2)+ggplot2::xlab("Response")+
     ggplot2::ylab("Estimated Density")+
     ggplot2::geom_vline(ggplot2::aes(xintercept=vertical),size=lineWidth)+
     ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))+ ggplot2::facet_wrap(~ dataPoint)
+  print(g)
+
+  if(predictionBandProb==FALSE)
+    return()
+
+  eps=0.35
+  k=nrow(xTest)
+  plot(x=1:k,y=zTest,main="",ylab="Prediction Region",cex.main=1.4,cex.axis=1.4,cex.lab=1.4,cex=1.5,col=1,xaxt="n",xlim=c(0.5,k+0.5),pch=16,ylim=c(objectCDE$zMin,objectCDE$zMax),xlab="Sample",bty="l")
+  for(ii in 1:k)
+  {
+    whichLarger=predictedValues$CDE[ii,]>predictedValues$th[ii]
+    runs=rle(whichLarger>0)
+    nRuns=length(runs$values)
+
+    cumulative=cumsum(runs$lengths)
+    for(jj in 1:nRuns)
+    {
+      if(runs$values[jj]==TRUE)
+      {
+        if(jj==1)
+        {
+          lower=fit$zMin
+          upper=predictedValues$z[cumulative[jj]]
+          lines(c(ii,ii),c(lower,upper),col=1,lwd=lineWidthPred)
+          lines(c(ii-eps,ii+eps),c(lower,lower),col=1,lwd=lineWidthPred)
+          lines(c(ii-eps,ii+eps),c(upper,upper),col=1,lwd=lineWidthPred)
+          next;
+        }
+        #points(rep(ii,sum(whichLarger)),predicted$z[whichLarger],pch=18,cex=0.9,col=2)
+        lower=predictedValues$z[cumulative[jj-1]]
+        upper=predictedValues$z[cumulative[jj]]
+        lines(c(ii,ii),c(lower,upper),col=1,lwd=lineWidthPred)
+
+        lines(c(ii-eps,ii+eps),c(lower,lower),col=1,lwd=lineWidthPred)
+        lines(c(ii-eps,ii+eps),c(upper,upper),col=1,lwd=lineWidthPred)
+      }
+    }
+  }
+
+  points(x=1:k,y=zTest,main="",ylab="Estimate",cex.main=1.4,cex.axis=1.4,cex.lab=1.4,cex=1.5,col=1,xaxt="n",xlim=c(0.5,k+0.5),pch=16,ylim=c(min(zTrain),max(zTrain)),xlab="Sample")
 
 
 }
@@ -347,7 +471,7 @@ plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=
 #' @examples # See \code{\link{bindFlexCoDE}}
 #'
 #' @export
-plot.FlexCoDE_binded=function(objectCDE_binded,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
+plot.FlexCoDE_binded=function(objectCDE_binded,xTest,zTest,nPlots=min(nrow(xTest),9),fontSize=12,lineWidth=1)
 {
 
   if(is.vector(xTest))
@@ -506,10 +630,11 @@ combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation,xTest=NULL,zTe
 #' @return The return value is an object with the following components
 #' \item{z}{Points where the density was evaluate}
 #' \item{CDE }{Matrix with value of the density at points z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
+#' @param predictionBandProb Either a number indicating the probability for the highest predictive density region desired  or FALSE if bands are not desired. Default is FALSE
 #' @export
 #'
 #' @examples # See \code{\link{combineFlexCoDE}}
-predict.combinedFlexCoDE=function(objectCombined,xNew,B=1000)
+predict.combinedFlexCoDE=function(objectCombined,xNew,B=1000,predictionBandProb=FALSE)
 {
   if(class(objectCombined)!="combinedFlexCoDE")
     stop("objectCombined should be of class combinedFlexCoDE")
@@ -538,6 +663,51 @@ predict.combinedFlexCoDE=function(objectCombined,xNew,B=1000)
   returnValue$z=grid
 
 
+  if(predictionBandProb==FALSE)
+    return(returnValue)
+
+
+  th=matrix(NA,nrow(returnValue$CDE),1)
+  for(i in 1:nrow(returnValue$CDE))
+  {
+
+    th[i]=.findThresholdHPD((objectCombined$zMax-objectCombined$zMin)/B,returnValue$CDE[i,],predictionBandProb)
+
+
+  }
+
+  returnValue$th=th
+  return(returnValue)
+
+  th=matrix(NA,nrow(returnValue$CDE),2)
+  for(i in 1:nrow(returnValue$CDE))
+  {
+    interval=.findThresholdSymmetricMode((objectCombined$zMax-objectCombined$zMin)/B,
+                                         returnValue$CDE[i,],
+                                         predictionBandProb)
+    intervalExtended=interval[1]:interval[2]
+    for(k in 1:length(intervalExtended))
+    {
+      if(returnValue$CDE[i,intervalExtended][k]==0)
+      {
+        interval[1]=interval[1]+1
+      } else {
+        break;
+      }
+    }
+    for(k in length(intervalExtended):1)
+    {
+      if(returnValue$CDE[i,intervalExtended][k]==0)
+      {
+        interval[2]=interval[2]-1
+      } else {
+        break;
+      }
+    }
+    th[i,1]=returnValue$z[interval[1]]
+    th[i,2]=returnValue$z[interval[2]]
+  }
+  returnValue$th=th
   return(returnValue)
 
 }
@@ -587,13 +757,15 @@ print.combinedFlexCoDE=function(objectCombined)
 #' @param nPlots Number of desired densities to be ploted (which will be picked at random). Default is minimum between 8 and number of testing points
 #' @param fontSize Font size of axis labels and legend
 #' @param lineWidth Line width of the curves to be ploted
+#' @param predictionBandProb Either a number indicating the probability for the highest predictive density region desired  or FALSE if bands are not desired. Default is FALSE
+#' @param lineWidthPred Line width of the prediction bands to be ploted
 #'
 #'
 #' @return Plot with estimated densities
 #' @export
 #'
 #' @examples # See \code{\link{combineFlexCoDE}}
-plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest),8),fontSize=12,lineWidth=1)
+plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest),9),fontSize=12,lineWidth=1,predictionBandProb=FALSE,lineWidthPred=0.6)
 {
 
   if(is.vector(xTest))
@@ -610,7 +782,7 @@ plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest)
   if(class(objectCombined)!="combinedFlexCoDE")
     stop("objectCDE needs to be of class combinedFlexCoDE")
   if(objectCombined$objectCDEs[[1]]$verbose)  print("Calculating predicted values")
-  predictedValues=predict(objectCombined,xTest,B=500)
+  predictedValues=predict(objectCombined,xTest,B=500,predictionBandProb=predictionBandProb)
 
   randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
   if(objectCombined$objectCDEs[[1]]$verbose) print("Creating plots")
@@ -625,10 +797,53 @@ plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest)
     }
   }
 
-  ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth,color=2)+ggplot2::xlab("Response")+
+  g=ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth,color=2)+ggplot2::xlab("Response")+
     ggplot2::ylab("Estimated Density")+
     ggplot2::geom_vline(ggplot2::aes(xintercept=vertical),size=lineWidth,color=2)+
     ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))+ ggplot2::facet_wrap(~ dataPoint)
+  print(g)
+
+  if(predictionBandProb==FALSE)
+    return()
+
+  eps=0.35
+  k=nrow(xTest)
+  plot(x=1:k,y=zTest,main="",ylab="Prediction Region",cex.main=1.4,
+       cex.axis=1.4,cex.lab=1.4,cex=1.5,col=1,xaxt="n",
+       xlim=c(0.5,k+0.5),pch=16,ylim=c(objectCombined$zMin,objectCombined$zMax),
+       xlab="Sample",bty="l")
+  for(ii in 1:k)
+  {
+    whichLarger=predictedValues$CDE[ii,]>predictedValues$th[ii]
+    runs=rle(whichLarger>0)
+    nRuns=length(runs$values)
+
+    cumulative=cumsum(runs$lengths)
+    for(jj in 1:nRuns)
+    {
+      if(runs$values[jj]==TRUE)
+      {
+        if(jj==1)
+        {
+          lower=fit$zMin
+          upper=predictedValues$z[cumulative[jj]]
+          lines(c(ii,ii),c(lower,upper),col=1,lwd=lineWidthPred)
+          lines(c(ii-eps,ii+eps),c(lower,lower),col=1,lwd=lineWidthPred)
+          lines(c(ii-eps,ii+eps),c(upper,upper),col=1,lwd=lineWidthPred)
+          next;
+        }
+        #points(rep(ii,sum(whichLarger)),predicted$z[whichLarger],pch=18,cex=0.9,col=2)
+        lower=predictedValues$z[cumulative[jj-1]]
+        upper=predictedValues$z[cumulative[jj]]
+        lines(c(ii,ii),c(lower,upper),col=1,lwd=lineWidthPred)
+
+        lines(c(ii-eps,ii+eps),c(lower,lower),col=1,lwd=lineWidthPred)
+        lines(c(ii-eps,ii+eps),c(upper,upper),col=1,lwd=lineWidthPred)
+      }
+    }
+  }
+
+  points(x=1:k,y=zTest,main="",ylab="Estimate",cex.main=1.4,cex.axis=1.4,cex.lab=1.4,cex=1.5,col=1,xaxt="n",xlim=c(0.5,k+0.5),pch=16,ylim=c(min(zTrain),max(zTrain)),xlab="Sample")
 
 
 }

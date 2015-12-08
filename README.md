@@ -48,4 +48,12 @@ fit$estimatedRisk
 print(fit)
 plot(fit,xTest,zTest)
 
+# Fit sparse additive FlexCoDE using 4 cores (i.e., using parallel computing)
+fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
+            nIMax = 30,regressionFunction = regressionFunction.SpAM,
+            regressionFunction.extra=list(nCores=4))
+fit$estimatedRisk
+print(fit)
+plot(fit,xTest,zTest)
+
 ```

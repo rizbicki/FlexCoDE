@@ -1,10 +1,9 @@
-library(splines)
 
 #' Calculate Basis functions for new observations
 #'
-#' @param z
-#' @param nIMax
-#' @param system
+#' @param z elements where basis is going to be calculated
+#' @param nIMax how many functions should be calculated
+#' @param system Basis system to be used. Currently, either "cosine" or "Fourier"
 #'
 #' @return Test
 calculateBasis=function(z,nIMax,system)
@@ -152,4 +151,49 @@ calculateBasis=function(z,nIMax,system)
 
   return(estimatesNew)
 
+}
+
+
+.findThresholdHPD=function(binSize,estimates,confidence)
+{
+  estimates=as.vector(estimates)
+  maxDensity=max(estimates)
+  minDensity=min(estimates)
+  newCut=(maxDensity+minDensity)/2
+  eps=1
+  ii=1
+  while(ii<=1000)
+  {
+    prob=sum(binSize*estimates*(estimates>newCut))
+    eps=abs(confidence-prob)
+    if(eps<0.0000001) break; # level found
+    if(confidence>prob) maxDensity=newCut
+    if(confidence<prob) minDensity=newCut
+    newCut=(maxDensity+minDensity)/2
+    ii=ii+1
+  }
+  return(newCut)
+}
+
+.findThresholdSymmetricMode=function(binSize,estimates,confidence)
+{
+  estimates=as.vector(estimates)
+  mode=which.max(estimates)
+  maxInverval=length(estimates)
+  minInverval=1
+  newCut=round(maxInverval/2)
+  eps=1
+  ii=1
+  while(ii<=1000)
+  {
+    whichRegion=round(max(c(1,mode-newCut)):min(c(length(estimates),mode+newCut)))
+    prob=sum(binSize*estimates[whichRegion])
+    eps=abs(confidence-prob)
+    if(eps<0.0000001) break; # level found
+    if(confidence>prob) minInverval=newCut
+    if(confidence<prob) maxInverval=newCut
+    newCut=(maxInverval+minInverval)/2
+    ii=ii+1
+  }
+  return(c(whichRegion[1],whichRegion[length(whichRegion)]))
 }

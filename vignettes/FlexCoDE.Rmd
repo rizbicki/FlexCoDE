@@ -2,7 +2,10 @@
 title: "FlexCoDE: the Flexible Conditional Density Estimator"
 author: "Rafael Izbicki"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+  html_document:
+    toc: true
+    number_sections: true
 vignette: >
   %\VignetteIndexEntry{FlexCoDE: the Flexible Conditional Density Estimator}
   %\VignetteEngine{knitr::rmarkdown}
@@ -14,13 +17,45 @@ knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE,cache=TRUE, fig.alig
 ```
 
 
-# Fitting Regression Models
+# Introduction
 
-We illustrate the methodology using the following artificial data set:
+FlexCode is a flexible approach to conditional density estimation.
+We observed an idd sample $(\mathbf{x}_1,z_1),\ldots,(\mathbf{x}_n,z_n)$
+and we wish to estimate $f(z|\mathbf{x})$, the density of $z \in \mathbb{R}$
+given $\mathbf{x} \in \mathbb{R}^d$.
+The estimator is based on a basis expansion of the conditional density,
+where each of the expansion coefficients is estimated via a regression method.
+FlexCode is flexible in that it is open for one to use his favorite
+regression method. In particular, it adapts to several situations (e.g., 
+sparsity, redundancy of covariate, mixed covariates types, functional covariates etc) if the right regression method is chosen.
+
+The FlexCode package currently implements several regression methods:
+
+* Sparse Additive Regression (SpAM)
+* Spectral Series Regression
+* Kernel Nearest Neighbors Regression
+* Nadaraya-Watson Regression
+* Random Forests
+
+The user may also implement his own regression function.
+
+The package also offers tools to combine (stack) various estimators
+and visualize them.
+
+# Fitting Conditional Density Estimators
+
+We illustrate the methodology using an artificial data set:
+for each sample, there are 10 observed covariates that are generated
+from a standard Gaussian distribution. The response is generated according
+to
+$$ Z_i =  x_{i,1}+\epsilon_i,$$
+with $\epsilon_i \sim N(0,0.1^2)$ iid, $i=1,\ldots,1000$, and
+$x_{i,1}$ is the first covariate. That is, the only covariate that affects
+the distribution of the response is the first one. 
+
 
 ```{r}
 set.seed(400)
-
 # generate data
 n=1000
 d=10
@@ -28,6 +63,14 @@ data=matrix(NA,n,d+1)
 data[,1:d]=matrix(rnorm(n*d),n,d)
 data[,d+1]=data[,1]+rnorm(n,0,0.1)
 
+
+```
+
+Now that we have our dataset, we can split it into training/validation and
+testing:
+
+
+```{r}
 # determine sample sizes
 nTrain=round(0.7*n)
 nValidation=round(0.25*n)
@@ -41,25 +84,63 @@ xTest=data[randomIndex[(nTrain+nValidation+1):n],1:d]
 zTrain=data[randomIndex[1:nTrain],d+1]
 zValidation=data[randomIndex[(nTrain+1):(nTrain+nValidation)],d+1]
 zTest=data[randomIndex[(nTrain+nValidation+1):n],d+1]
-
 ```
+
+We can now fit our estimators.  We start by fitting sparse additive models.
+This can be done via
+
 
 
 ```{r}
 library(FlexCoDE)
 fit1=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
-                 regressionFunction = regressionFunction.SpAM,verbose=FALSE)
+                 regressionFunction = regressionFunction.SpAM,nIMax=50,
+                 verbose=FALSE)
 ```
+
+It is not necessary to provide test data, however more information 
+(e.g., an estimate of the risk) is provided if it is available.
+\verb|nIMax| is the maximum number of basis elements to be used.
+The function automatically tunes the model (e.g, chooses how many components
+to use and parameters associated to the regression functions).
+A summary of the fitted model can be found via
+
 
 ```{r}
 print(fit1)
 ```
 
-Different regression methods have different outputs
+
+Notice the print function also provides a measure of importante
+of each covariate for some regression methods. In the case of 
+SpAM, it shows how many of the fitted regressions selected each
+of the covariates. In this case, it is possible to see that the first
+covariate is the most important one. In fact, it is the only one that
+indeed influences the distribution of the response.
+
+We can also plot some examples of estimated densities on new (testing)
+data. If we use the argument |predictionBandProb|, a second
+plot with the highest predictive regions (HPG) is also shown:
 
 ```{r}
-plot(fit1,xTest,zTest)
+plot(fit1,xTest,zTest,predictionBandProb=0.95)
 ```
+
+
+## Parallel Computing
+
+Some regression estimators can make use of parallel computing. For example,
+you can fit sparse additive model using 4 cores via 
+
+
+```{r}
+fit1=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
+                 regressionFunction = regressionFunction.SpAM,
+                 regressionFunction.extra=list(nCores=4),
+                 verbose=FALSE)
+```
+
+This will typically take less time than using a naive calculation.
 
 # Comparing Conditional Estimators
 
