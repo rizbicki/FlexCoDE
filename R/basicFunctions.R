@@ -431,7 +431,7 @@ plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),9),fontSize=
       {
         if(jj==1)
         {
-          lower=fit$zMin
+          lower=objectCDE$zMin
           upper=predictedValues$z[cumulative[jj]]
           lines(c(ii,ii),c(lower,upper),col=1,lwd=lineWidthPred)
           lines(c(ii-eps,ii+eps),c(lower,lower),col=1,lwd=lineWidthPred)
@@ -449,7 +449,8 @@ plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),9),fontSize=
     }
   }
 
-  points(x=1:k,y=zTest,main="",ylab="Estimate",cex.main=1.4,cex.axis=1.4,cex.lab=1.4,cex=1.5,col=1,xaxt="n",xlim=c(0.5,k+0.5),pch=16,ylim=c(min(zTrain),max(zTrain)),xlab="Sample")
+  points(x=1:k,y=zTest,main="",ylab="Estimate",cex.main=1.4,cex.axis=1.4,cex.lab=1.4,cex=1.5,col=1,xaxt="n",xlim=c(0.5,k+0.5),pch=16,
+         xlab="Sample")
 
 
 }
@@ -825,7 +826,7 @@ plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest)
       {
         if(jj==1)
         {
-          lower=fit$zMin
+          lower=objectCombined$zMin
           upper=predictedValues$z[cumulative[jj]]
           lines(c(ii,ii),c(lower,upper),col=1,lwd=lineWidthPred)
           lines(c(ii-eps,ii+eps),c(lower,lower),col=1,lwd=lineWidthPred)
@@ -843,7 +844,8 @@ plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest)
     }
   }
 
-  points(x=1:k,y=zTest,main="",ylab="Estimate",cex.main=1.4,cex.axis=1.4,cex.lab=1.4,cex=1.5,col=1,xaxt="n",xlim=c(0.5,k+0.5),pch=16,ylim=c(min(zTrain),max(zTrain)),xlab="Sample")
+  points(x=1:k,y=zTest,main="",ylab="Estimate",cex.main=1.4,cex.axis=1.4,cex.lab=1.4,cex=1.5,col=1,xaxt="n",
+         xlim=c(0.5,k+0.5),pch=16,xlab="Sample")
 
 
 }

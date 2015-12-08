@@ -127,13 +127,22 @@ plot(fit1,xTest,zTest,predictionBandProb=0.95)
 ```
 
 
+You may change default arguments for the regression method by using the
+\verb|regressionFunction.extra| argument. To see which arguments you can choose, see the help function for the regression method you want to use
+eg, \verb|regressionFunction.SpAM|.
+
+Finally, you can use the \verb|predict| function to estimate the density
+on new testing points, as well as to build predictive intervals for new
+observations. See the function \verb|fitFlexCoDE|
+for more examples.
+
 ## Parallel Computing
 
 Some regression estimators can make use of parallel computing. For example,
 you can fit sparse additive model using 4 cores via 
 
 
-```{r}
+```{r,eval=FALSE}
 fit1=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
                  regressionFunction = regressionFunction.SpAM,
                  regressionFunction.extra=list(nCores=4),
@@ -144,6 +153,77 @@ This will typically take less time than using a naive calculation.
 
 # Comparing Conditional Estimators
 
+The package provides a nice way to compare conditional estimators
+estimated by FlexCode via different regression methods. This can be done
+by binding the various estimators. For instance, let's fit two additional
+estimators:
+
+```{r}
+# random Forest
+fit2=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
+                 regressionFunction = regressionFunction.Forest,
+                 regressionFunction.extra=list(nCores=4),nIMax = 50,
+                 verbose=FALSE)
+# Nearest Neighbors estimator
+fit3=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
+                 regressionFunction = regressionFunction.NN,
+                 regressionFunction.extra=list(nCores=4),
+                 verbose=FALSE)
+```
+
+You can bind the three estimators using
+
+```{r}
+fitBind=bindFlexCoDE(fit1,fit2,fit3)
+```
+
+You can now compare easily these estimators:
+
+```{r}
+print(fitBind)
+```
+
+
+```{r}
+plot(fitBind,xTest,zTest,nPlots = 4)
+```
+
 # Combining Conditional Estimators
 
+
+After binding estimators, it is easy to combine all of them into a singles
+conditional density estimate. This can be done via the \verb|combineFlexCoDE|
+function, which looks for the best linear combination of the predictions:
+
+
+
+```{r}
+combinedEstimator=combineFlexCoDE(fitBind,xValidation,zValidation,xTest,zTest)
+combinedEstimator$weights # best weights
+combinedEstimator$estimatedRisk
+```
+
+
+```{r}
+plot(combinedEstimator,xTest,zTest,nPlots = 6,predictionBandProb = 0.95)
+print(combinedEstimator)
+```
+
+
 # Designing your own regression functions
+
+
+You can design your own regression functions
+to estimate the conditional densities.
+In order to this, you need to write three functions:
+
+* regressionFunction.YourMethod: function that receives three arguments:
+ * x: matrix of covariates used to train the model
+ * responses: matrix where each row corresponds to a row in x and each column corresponds to a different response (in practice, it will be $\phi_i(z)$, but you do not need to worry about this)
+ * extra: a list with extra parameters used to fit your regression function you wish the used to have flexibility over
+ Your function should output
+* predict.YourMethod:
+* print.YourMethod:
+
+# Kernelized version of the functions
+
