@@ -13,7 +13,7 @@ vignette: >
 ---
 
 ```{r global_options, include=FALSE}
-knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE,cache=TRUE, fig.align="center")
+knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE,cache=FALSE, fig.align="center")
 ```
 
 
@@ -31,11 +31,11 @@ sparsity, redundancy of covariate, mixed covariates types, functional covariates
 
 The FlexCode package currently implements several regression methods:
 
-* Sparse Additive Regression (SpAM)
-* Spectral Series Regression
-* Kernel Nearest Neighbors Regression
-* Nadaraya-Watson Regression
-* Random Forests
+* Sparse Additive Regression (SpAM) (_regressionFunction.SpAM_)
+* Spectral Series Regression (_regressionFunction.Series_)
+* Kernel Nearest Neighbors Regression (_regressionFunction.NN_)
+* Nadaraya-Watson Regression (_regressionFunction.NW_)
+* Random Forests (_regressionFunction.Forest_)
 
 The user may also implement his own regression function.
 
@@ -92,7 +92,7 @@ This can be done via
 
 
 ```{r}
-library(FlexCoDE)
+#library(FlexCoDE)
 fit1=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
                  regressionFunction = regressionFunction.SpAM,nIMax=50,
                  verbose=FALSE)
@@ -197,6 +197,7 @@ function, which looks for the best linear combination of the predictions:
 
 
 
+
 ```{r}
 combinedEstimator=combineFlexCoDE(fitBind,xValidation,zValidation,xTest,zTest)
 combinedEstimator$weights # best weights
@@ -213,17 +214,33 @@ print(combinedEstimator)
 # Designing your own regression functions
 
 
+
 You can design your own regression functions
 to estimate the conditional densities.
 In order to this, you need to write three functions:
 
-* regressionFunction.YourMethod: function that receives three arguments:
+1. regressionFunction.YourMethod: function that receives three arguments:
+
  * x: matrix of covariates used to train the model
  * responses: matrix where each row corresponds to a row in x and each column corresponds to a different response (in practice, it will be $\phi_i(z)$, but you do not need to worry about this)
  * extra: a list with extra parameters used to fit your regression function you wish the used to have flexibility over
- Your function should output
-* predict.YourMethod:
-* print.YourMethod:
+ Your function should output an object of the class *YourMethod* (the name you've assigned to the regressionFunction function). This object needs to have enough information for you
+ to be able to predict the value of each of the regression functions on new data points $x$. We recommend you see the code of some existing regressionFunction methods to see how this can be done, for instance, regressionFunction.NN
+2. predict.YourMethod: function that received three arguments:
+
+* object: the output of regressionFunction.YourMethod, the regression function you've designed (an object of the class _YourMethod_ - the name you've assigned to the regressionFunction function)
+* xNew: matrix where each row is a new sample, and each column is a covariate
+* maxTerms: how many regression functions should be predicted. That is, in regressionFunction.YourMethod, you've created say nIMax regression functions. In predict.YourMethod, you only need to predict the first maxTerms of these functions.
+The default of maxTerms should be NULL, and your function should make sure it is at most
+the number of regressions you've fitted via regressionFunction.YourMethod.
+The output of predict.YourMethod should be a matrix with the same number of rows as xNew and maxTerms column, where column j has the prediction of the j-th regression you've fitted in each of the samples from xNew. We recommend you see the code of some existing regressionFunction methods to see how this can be done, for instance, predict.NN
+
+3. print.YourMethod: function that receives three arguments:
+
+* regressionObject: the output of regressionFunction.YourMethod, the regression function you've designed (an object of the class _YourMethod_ - the name you've assigned to the regressionFunction function)
+* bestI: a number that indicates how many basis functions (regressions) will be used
+* nameCovariates: name of the covariates
+Your function should then output your favorite statistics about the fitted regression functions. We recommend you see the code of some existing regressionFunction methods to see how this can be done, for instance, print.NN (which does not use nameCovariates)
 
 # Kernelized version of the functions
 

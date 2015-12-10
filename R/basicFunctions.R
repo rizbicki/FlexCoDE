@@ -788,19 +788,21 @@ plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest)
   randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
   if(objectCombined$objectCDEs[[1]]$verbose) print("Creating plots")
 
-  data=data.frame(x=predictedValues$z,y=predictedValues$CDE[randomOrder[1],],dataPoint=rep(1,length(predictedValues$z)),vertical=zTest[randomOrder[1]])
+  data=data.frame(x=predictedValues$z,y=predictedValues$CDE[randomOrder[1],],dataPoint=rep(1,length(predictedValues$z)),vertical=rep(zTest[randomOrder[1]],length(predictedValues$z)))
   if(nPlots>1)
   {
     for(i in 2:nPlots)
     {
-      dataB=data.frame(x=predictedValues$z,y=predictedValues$CDE[randomOrder[i],],dataPoint=rep(i,length(predictedValues$z)),vertical=zTest[randomOrder[i]])
+      dataB=data.frame(x=predictedValues$z,y=predictedValues$CDE[randomOrder[i],],dataPoint=rep(i,length(predictedValues$z)),vertical=rep(zTest[randomOrder[i]],length(predictedValues$z)))
       data=rbind(data,dataB)
     }
   }
 
-  g=ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+ggplot2::geom_line(size=lineWidth,color=2)+ggplot2::xlab("Response")+
+  g=ggplot2::ggplot(data,ggplot2::aes(x=x,y=y))+
+    ggplot2::geom_line(size=lineWidth,color=2)+ggplot2::xlab("Response")+
     ggplot2::ylab("Estimated Density")+
-    ggplot2::geom_vline(ggplot2::aes(xintercept=vertical),size=lineWidth,color=2)+
+    ggplot2::geom_vline(ggplot2::aes(xintercept=vertical),
+                        size=lineWidth,color=2)+
     ggplot2::theme(axis.title=ggplot2::element_text(size=fontSize,face="bold"))+ ggplot2::facet_wrap(~ dataPoint)
   print(g)
 

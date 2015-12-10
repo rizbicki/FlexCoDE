@@ -417,7 +417,7 @@ plot.FlexCoDEKernel=function(objectCDE,kernelTestTrain,zTest,nPlots=min(nrow(ker
 
 #' @return Plot with estimated densities
 #'
-#' @examples # See \code{\link{bindFlexCoDE}}
+#' @examples # See \code{\link{bindFlexCoDEKernel}}
 #'
 #' @export
 plot.FlexCoDE_bindedKernel=function(objectCDE_binded,kernelTestTrain,zTest,nPlots=min(nrow(kernelTestTrain),8),fontSize=12,lineWidth=1)

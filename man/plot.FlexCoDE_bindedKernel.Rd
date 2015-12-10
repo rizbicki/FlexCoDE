@@ -27,7 +27,7 @@ Plot with estimated densities
 Plots examples of estimated densities together with real response
 }
 \examples{
-# See \\code{\\link{bindFlexCoDE}}
+# See \\code{\\link{bindFlexCoDEKernel}}
 
 }
 
