@@ -55,6 +55,7 @@ the distribution of the response is the first one.
 
 
 ```{r}
+library(FlexCoDE)
 set.seed(400)
 # generate data
 n=1000
