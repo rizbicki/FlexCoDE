@@ -3,16 +3,16 @@ title: "FlexCoDE: the Flexible Conditional Density Estimator"
 author: "Rafael Izbicki"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    toc: true
-    number_sections: true
+html_document:
+toc: true
+number_sections: true
 vignette: >
   %\VignetteIndexEntry{FlexCoDE: the Flexible Conditional Density Estimator}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}  
----
-
-```{r global_options, include=FALSE}
+  ---
+  
+  ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE,cache=FALSE, fig.align="center")
 ```
 
@@ -152,7 +152,7 @@ fit1=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
 
 This will typically take less time than using a naive calculation.
 
-# Comparing Conditional Estimators
+# Comparing Conditional Density Estimators
 
 The package provides a nice way to compare conditional estimators
 estimated by FlexCode via different regression methods. This can be done
@@ -189,7 +189,7 @@ print(fitBind)
 plot(fitBind,xTest,zTest,nPlots = 4)
 ```
 
-# Combining Conditional Estimators
+# Combining Conditional Density Estimators
 
 
 After binding estimators, it is easy to combine all of them into a singles
@@ -222,11 +222,11 @@ In order to this, you need to write three functions:
 
 1. regressionFunction.YourMethod: function that receives three arguments:
 
- * x: matrix of covariates used to train the model
- * responses: matrix where each row corresponds to a row in x and each column corresponds to a different response (in practice, it will be $\phi_i(z)$, but you do not need to worry about this)
- * extra: a list with extra parameters used to fit your regression function you wish the used to have flexibility over
- Your function should output an object of the class *YourMethod* (the name you've assigned to the regressionFunction function). This object needs to have enough information for you
- to be able to predict the value of each of the regression functions on new data points $x$. We recommend you see the code of some existing regressionFunction methods to see how this can be done, for instance, regressionFunction.NN
+* x: matrix of covariates used to train the model
+* responses: matrix where each row corresponds to a row in x and each column corresponds to a different response (in practice, it will be $\phi_i(z)$, but you do not need to worry about this)
+* extra: a list with extra parameters used to fit your regression function you wish the used to have flexibility over
+Your function should output an object of the class *YourMethod* (the name you've assigned to the regressionFunction function). This object needs to have enough information for you
+to be able to predict the value of each of the regression functions on new data points $x$. We recommend you see the code of some existing regressionFunction methods to see how this can be done, for instance, regressionFunction.NN
 2. predict.YourMethod: function that received three arguments:
 
 * object: the output of regressionFunction.YourMethod, the regression function you've designed (an object of the class _YourMethod_ - the name you've assigned to the regressionFunction function)
@@ -244,4 +244,63 @@ The output of predict.YourMethod should be a matrix with the same number of rows
 Your function should then output your favorite statistics about the fitted regression functions. We recommend you see the code of some existing regressionFunction methods to see how this can be done, for instance, print.NN (which does not use nameCovariates)
 
 # Kernelized version of the functions
+
+An alternative way to use FlexCode is by using Gram matrices as inputs instead of the raw covariates. This allows for faster implementations when
+computing such matrices is time consuming (e.g., this computation can be performed outside R). It also yields flexibility, because the user can input
+his own kernel.
+
+Currently, the implemented kernelized
+
+* Spectral Series Regression (_regressionFunction.SeriesKernel_)
+* Kernel Nearest Neighbors Regression (_regressionFunction.NNKernel_)
+* Support Distribution Regression (SDM) (_regressionFunction.SDMKernel_)
+
+
+Here is one example. First, we simulate the data. In this case, we 
+the domain of the covariate space is in a submanifold
+of  $\mathbb{R}^{50}$, a 2 dimensional circle:
+
+```{r}
+n=1000
+t=runif(n,0,2*pi)
+d=50
+vec=c(2/sqrt(d+3),1/sqrt(d+3)*rep(rep(c(-1,1),each=d/2)))[-(d+1)]
+X=cos(t)%*%t(c(rep(1/sqrt(d-1),d-1),0))+sin(t)%*%t(vec)
+z <- t+rnorm(n,0,0.5)
+```
+
+We not split the data into training/validation/testing:
+
+```{r}
+nTrain=700
+nValidation=150
+nTest=n-nValidation-nTrain
+randomPerm=sample(1:n)
+
+
+zTrain=z[randomPerm[1:nTrain]]
+zValidation=z[randomPerm[(nTrain+1):(nTrain+nValidation)]]
+zTest=z[randomPerm[(nTrain+nValidation+1):n]]
+xTrain=X[randomPerm[1:nTrain],,drop=FALSE]
+xValidation=X[randomPerm[(nTrain+1):(nTrain+nValidation)],,drop=FALSE]
+xTest=X[randomPerm[(nTrain+nValidation+1):n],,drop=FALSE]
+```
+
+In order to fit the spectral series estimator using a kernel, we first compute the Gram Matrix. For the sake of illustration, we use a gaussian kernel with bandwidth $\epsilon=0.5$, $K(\vec{x}_i,\vec{x}_j)=e^{{-d^2(\vec{x}_i,\vec{x}_j)/\epsilon}}$
+
+```{r}
+eps=0.5 # 
+gramTrainTrain=exp((fields::rdist(xTrain,xTrain)^2)/eps)
+gramValidationTrain=exp((fields::rdist(xValidation,xTrain)^2)/eps)
+gramTestTrain=exp((fields::rdist(xTest,xTrain)^2)/eps)
+
+fit=fitFlexCoDEKernel(gramTrainTrain,zTrain,gramValidationTrain,zValidation,gramTestTrain,zTest,regressionFunction = regressionFunction.SeriesKernel)
+```
+
+
+The same ploting/printing/predicting functions can be used with FlexCoDEKernel:
+
+```{r}
+plot(fit,gramTestTrain,zTest,predictionBandProb = 0.95)
+```
 

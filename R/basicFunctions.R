@@ -58,6 +58,9 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   objectCDE$zTrain=zTrain
   objectCDE$xTrain=xTrain
   objectCDE$regressionObject=regressionObject
+  
+  objectCDE$covariateNames=colnames(xTrain)
+  
   rm(regressionObject,xTrain,zTrain,responseFourier)
   gc(verbose = FALSE)
 
@@ -101,8 +104,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   if(objectCDE$bestI==objectCDE$nIMax)
     warning("\n the optimal I found was exactly nIMax; try increasing nIMax if you want to improve performance")
 
-  objectCDE$covariateNames=colnames(xTrain)
-
+  
   return(objectCDE)
 }
 

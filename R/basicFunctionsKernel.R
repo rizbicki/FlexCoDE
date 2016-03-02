@@ -380,7 +380,7 @@ plot.FlexCoDEKernel=function(objectCDE,kernelTestTrain,zTest,nPlots=min(nrow(ker
       {
         if(jj==1)
         {
-          lower=fit$zMin
+          lower=objectCDE$zMin
           upper=predictedValues$z[cumulative[jj]]
           lines(c(ii,ii),c(lower,upper),col=1,lwd=lineWidthPred)
           lines(c(ii-eps,ii+eps),c(lower,lower),col=1,lwd=lineWidthPred)
@@ -668,7 +668,7 @@ plot.combinedFlexCoDEKernel=function(objectCombined,kernelTestTrain,zTest,nPlots
     stop("Please provide zTest")
 
   if(class(objectCombined)!="combinedFlexCoDEKernel")
-    stop("objectCDE needs to be of class combinedFlexCoDEKernel")
+    stop("objectCombined needs to be of class combinedFlexCoDEKernel")
 
   if(objectCombined$objectCDEs[[1]]$verbose)  print("Calculating predicted values")
   predictedValues=predict(objectCombined,kernelTestTrain,B=500)

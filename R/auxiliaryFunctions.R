@@ -8,10 +8,6 @@
 #' @return Test
 calculateBasis=function(z,nIMax,system)
 {
-  # z: vector
-  # nZ: number of cponents of basis for z
-  # outputs matrix  length(z) by nIMax with first nZ components of the basis at points z
-  # system is cosine or Fourier
   if(system=="cosine")
   {
     basisZ=apply(as.matrix(1:(nIMax-1)),1,function(xx)sqrt(2)*cos(xx*pi*z))

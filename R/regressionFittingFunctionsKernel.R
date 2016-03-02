@@ -89,9 +89,9 @@ print.NNKernel=function(regressionObject,bestI,nameCovariates)
 #'
 #' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @param kernelX matrix with covariates that will be used for training
+#' @param kernelX gram matrix that will be used for training
 #' @param responses matrix where each column is a response for the training data
-#' @param extra list with two components: the first is named epsGrid, which contains a vetor with different number of bandwidths to be used in the gaussian kernel; the function will choose the best value among them; the second is called nXMax and contains a single integer number that describes what is the maximum number of spectral basis functions with be used
+#' @param extra list with one component called nXMax and contains a single integer number that describes what is the maximum number of spectral basis functions with be used
 #'
 #' @return object of the class Series containing information needed to perform prediction on new points
 #' @export
