@@ -99,11 +99,15 @@ predict.SDMKernel=function(object,kernelNewTrain,maxTerms=NULL)
 
   predictedValidation=matrix(NA,nrow(kernelNewTrain),maxTerms)
   predictedValidation[,1]=1
-  for(i in 2:maxTerms)
+  
+  if(maxTerms>=2)
   {
-    predictedValidation[,i]=predict(object$fittedReg[[i]],kernlab::as.kernelMatrix(kernelNewTrain[,kernlab::SVindex(object$fittedReg[[i]])]))
+    for(i in 2:maxTerms)
+    {
+      predictedValidation[,i]=predict(object$fittedReg[[i]],kernlab::as.kernelMatrix(kernelNewTrain[,kernlab::SVindex(object$fittedReg[[i]])]))
+    }
   }
-
+  
   rm(kernelNewTrain)
   gc(verbose = FALSE)
 
