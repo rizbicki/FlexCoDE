@@ -271,6 +271,8 @@ regressionFunction.SDMKernel=function(kernelX,responses,extra=NULL)
 
 
   fittedReg <- foreach(i=2:ncol(responses)) %dopar% {
+    #  for(i in 3:ncol(responses))
+    #  {
     errors=matrix(NA,length(C),length(eps))
     for(j in 1:length(C))
     {
@@ -279,11 +281,15 @@ regressionFunction.SDMKernel=function(kernelX,responses,extra=NULL)
         fit=try(kernlab::ksvm(x=kernelX,y=responses[,i],type="eps-svr",kernel="matrix",cross=2,epsilon=eps[k],C=C[j]),silent = TRUE)
         if(class(fit)=="try-error")
           next;
-        errors[j,k]=fit@error
+        #errors[j,k]=fit@error
+        errors[j,k]=fit@cross
       }
     }
     which=which(errors==min(errors),arr.ind = TRUE)
-    return(kernlab::ksvm(x=kernelX,y=responses[,i],type="eps-svr",kernel="matrix",cross=2,epsilon=eps[which[2]],C=C[which[1]]))
+    #a=kernlab::ksvm(x=kernelX,y=responses[,i],type="eps-svr",kernel="matrix",epsilon=eps[which[2]],C=C[which[1]])
+    #}
+    #return(kernlab::ksvm(x=kernelX,y=responses[,i],type="eps-svr",kernel="matrix",cross=2,epsilon=eps[which[2]],C=C[which[1]]))
+    return(kernlab::ksvm(x=kernelX,y=responses[,i],type="eps-svr",kernel="matrix",epsilon=eps[which[2]],C=C[which[1]]))
   }
 
   parallel::stopCluster(cl)
