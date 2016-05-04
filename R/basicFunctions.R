@@ -42,13 +42,13 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
     xTest=as.matrix(xTest)
 
   if(is.vector(zTrain))
-    xTrain=as.matrix(zTrain)
+    zTrain=as.matrix(zTrain)
 
   if(is.vector(zValidation))
-    xValidation=as.matrix(zValidation)
+    zValidation=as.matrix(zValidation)
 
   if(is.vector(zTest))
-    xTest=as.matrix(zTest)
+    zTest=as.matrix(zTest)
 
     objectCDE=NULL
   objectCDE$zMax=max(zTrain)
