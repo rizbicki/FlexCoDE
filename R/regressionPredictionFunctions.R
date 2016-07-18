@@ -229,7 +229,7 @@ predict.XGBoost=function(object,xNew,maxTerms=NULL)
   {
     if(maxTerms==1)
       return(matrix(1,nrow(xNew),1))
-    maxTerms=min(maxTerms,length(object$fittedReg))
+    maxTerms=min(maxTerms,length(object$fittedReg)+1)
   } else {
     maxTerms=length(object$fittedReg)+1
   }

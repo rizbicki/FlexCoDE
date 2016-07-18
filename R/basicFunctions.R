@@ -274,10 +274,12 @@ predict.FlexCoDE=function(objectCDE,xNew,B=1000,predictionBandProb=FALSE)
   if(is.null(objectCDE$bestI))
     objectCDE$bestI=objectCDE$nIMax
 
-  coeff=predict(objectCDE$regressionObject,xNew,maxTerms=objectCDE$bestI)
+  coeff=predict(objectCDE$regressionObject,xNew,
+                maxTerms=objectCDE$bestI)
 
 
-  basisZNew=calculateBasis(zGrid,objectCDE$bestI,objectCDE$system) # returns matrix length(z)xnIMax with the basis for z
+  basisZNew=calculateBasis(zGrid,objectCDE$bestI,
+                           objectCDE$system) # returns matrix length(z)xnIMax with the basis for z
 
   estimates=coeff%*%t(basisZNew)
 
