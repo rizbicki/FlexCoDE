@@ -620,6 +620,7 @@ print.Forest=function(regressionObject,bestI,nameCovariates)
 #'
 #' @return object of the class XGBoost containing information needed to perform prediction on new points
 #' @export
+#'
 regressionFunction.XGBoost=function(x,responses,extra=NULL)
 {
 
