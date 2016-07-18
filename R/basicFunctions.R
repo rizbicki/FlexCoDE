@@ -30,27 +30,30 @@
 #' @example ../testPackage.R
 #'
 #' @export
-fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,system="Fourier",deltaGrid=seq(0,0.45,length.out = 15),chooseDelta=TRUE,verbose=TRUE)
+fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,
+                     nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,
+                     system="Fourier",
+                     deltaGrid=seq(0,0.45,length.out = 15),chooseDelta=TRUE,verbose=TRUE)
 {
-  if(is.vector(xTrain))
+  if(!is.vector(xTrain))
     xTrain=as.matrix(xTrain)
 
-  if(is.vector(xValidation))
+  if(!is.vector(xValidation))
     xValidation=as.matrix(xValidation)
 
-  if(is.vector(xTest))
+  if(!is.vector(xTest))
     xTest=as.matrix(xTest)
 
-  if(is.vector(zTrain))
+  if(!is.vector(zTrain))
     zTrain=as.matrix(zTrain)
 
-  if(is.vector(zValidation))
+  if(!is.vector(zValidation))
     zValidation=as.matrix(zValidation)
 
-  if(is.vector(zTest))
+  if(!is.vector(zTest))
     zTest=as.matrix(zTest)
 
-    objectCDE=NULL
+  objectCDE=NULL
   objectCDE$zMax=max(zTrain)
   objectCDE$zMin=min(zTrain)
   zTrain=(zTrain-objectCDE$zMin)/(objectCDE$zMax-objectCDE$zMin)
@@ -273,6 +276,7 @@ predict.FlexCoDE=function(objectCDE,xNew,B=1000,predictionBandProb=FALSE)
 
   coeff=predict(objectCDE$regressionObject,xNew,maxTerms=objectCDE$bestI)
 
+
   basisZNew=calculateBasis(zGrid,objectCDE$bestI,objectCDE$system) # returns matrix length(z)xnIMax with the basis for z
 
   estimates=coeff%*%t(basisZNew)
@@ -305,36 +309,36 @@ predict.FlexCoDE=function(objectCDE,xNew,B=1000,predictionBandProb=FALSE)
   returnValue$th=th
   return(returnValue)
 
-  th=matrix(NA,nrow(returnValue$CDE),2)
-  for(i in 1:nrow(returnValue$CDE))
-  {
-    interval=.findThresholdSymmetricMode((objectCDE$zMax-objectCDE$zMin)/B,
-                                         returnValue$CDE[i,],
-                                         predictionBandProb)
-    intervalExtended=interval[1]:interval[2]
-    for(k in 1:length(intervalExtended))
-    {
-      if(returnValue$CDE[i,intervalExtended][k]==0)
-      {
-        interval[1]=interval[1]+1
-      } else {
-        break;
-      }
-    }
-    for(k in length(intervalExtended):1)
-    {
-      if(returnValue$CDE[i,intervalExtended][k]==0)
-      {
-        interval[2]=interval[2]-1
-      } else {
-        break;
-      }
-    }
-    th[i,1]=returnValue$z[interval[1]]
-    th[i,2]=returnValue$z[interval[2]]
-  }
-  returnValue$th=th
-  return(returnValue)
+  # th=matrix(NA,nrow(returnValue$CDE),2)
+  # for(i in 1:nrow(returnValue$CDE))
+  # {
+  #   interval=.findThresholdSymmetricMode((objectCDE$zMax-objectCDE$zMin)/B,
+  #                                        returnValue$CDE[i,],
+  #                                        predictionBandProb)
+  #   intervalExtended=interval[1]:interval[2]
+  #   for(k in 1:length(intervalExtended))
+  #   {
+  #     if(returnValue$CDE[i,intervalExtended][k]==0)
+  #     {
+  #       interval[1]=interval[1]+1
+  #     } else {
+  #       break;
+  #     }
+  #   }
+  #   for(k in length(intervalExtended):1)
+  #   {
+  #     if(returnValue$CDE[i,intervalExtended][k]==0)
+  #     {
+  #       interval[2]=interval[2]-1
+  #     } else {
+  #       break;
+  #     }
+  #   }
+  #   th[i,1]=returnValue$z[interval[1]]
+  #   th[i,2]=returnValue$z[interval[2]]
+  # }
+  # returnValue$th=th
+  # return(returnValue)
 
 }
 
@@ -386,7 +390,7 @@ print.FlexCoDE=function(objectCDE)
 #'
 plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),9),fontSize=12,lineWidth=1,predictionBandProb=FALSE,lineWidthPred=0.6)
 {
-  if(is.vector(xTest))
+  if(!is.matrix(xTest))
     xTest=as.matrix(xTest)
 
 

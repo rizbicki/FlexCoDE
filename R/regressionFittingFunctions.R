@@ -603,3 +603,107 @@ print.Forest=function(regressionObject,bestI,nameCovariates)
 }
 
 
+
+
+
+
+#' XGBoost
+#'
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
+#'
+#' @param x matrix with covariates that will be used for training
+#' @param responses matrix where each column is a response for the training data
+#' @param extra list with one components named p0Vec, which contains a vetor with different number of variables randomly sampled as candidates at each split of the forest regression (aka mtry in randomForest package); the function will choose the best value among them;  one component named ntree which contains the number of tree to be used by the forest (default is 500), and  one component named maxnodes which contains the number of f terminal nodes trees in the forest can have (if not given, trees are grown to the maximum possible). The list can also contain a component named
+#' nCores which contains the number of cores to be used for parallel computing. Default is one.
+#'
+#' @import randomForest
+#'
+#' @return object of the class XGBoost containing information needed to perform prediction on new points
+#' @export
+regressionFunction.XGBoost=function(x,responses,extra=NULL)
+{
+
+  # Both x and responses are matrices
+
+  ninter=extra$ninter
+  if(is.null(ninter))
+    ninter=500
+
+  maxnodes=extra$maxnodes
+
+  nCores=extra$nCores
+  if(is.null(nCores))
+    nCores=1
+
+  cl <- parallel::makeCluster(nCores)
+  doParallel::registerDoParallel(cl)
+
+
+  fittedReg <- foreach(ii=2:ncol(responses)) %dopar% {
+    bst <- xgboost::xgboost(data =x,label=responses[,ii,drop=FALSE],
+                              nthread = 1,
+                            nround = ninter,
+                            objective="reg:linear",
+                            verbose=FALSE)
+
+    object=NULL
+    object$fit=bst
+    object$importance=xgboost::xgb.importance(colnames(x), model = bst)
+    gc(verbose=FALSE)
+    return(object)
+  }
+
+  parallel::stopCluster(cl)
+
+  regressionObject=NULL
+  regressionObject$fittedReg=fittedReg
+  class(regressionObject)="XGBoost"
+  return(regressionObject)
+}
+
+#' Print function for object of the class XGBoost
+#'
+#' This function is typically not directly used by the user; it is used inside  \code{\link{print.FlexCoDE}}, the print
+#' method for the class FlexCoDE
+#'
+#' @param regressionObject of the class XGBoost
+#' @param bestI optimal number of expansion coefficients
+#' @param nameCovariates name of the covariates
+#'
+#' @return prints characteristics of the regressions that were fitted
+#'
+print.XGBoost=function(regressionObject,bestI,nameCovariates)
+{
+
+  print("Printing function not implemented for XGBoost yet")
+  return()
+
+  if(length(regressionObject$fittedReg[[1]]$importance)==1)
+  {
+    importance=t(sapply(regressionObject$fittedReg,function(x)x$importance)[1:bestI])
+
+  } else {
+    importance=sapply(regressionObject$fittedReg,function(x)x$importance)[,1:bestI]
+  }
+  freq=rowMeans(importance)
+
+  table=data.frame(covariate=order(freq,decreasing = TRUE),frequency=sort(freq,decreasing =  TRUE))
+  cat(paste("Average Importance of each covariate: \n"))
+  print(table)
+
+
+  if(is.null(nameCovariates))
+    nameCovariates=1:nrow(table)
+
+  table$covariate=factor(table$covariate,levels=table$covariate)
+  ggplot2::ggplot(table, ggplot2::aes(x=as.factor(covariate),y=frequency))+
+    ggplot2::geom_bar(position="dodge",stat="identity") +
+    ggplot2::coord_flip()+ggplot2::ylab("Average Importance")+ggplot2::xlab("Covariate")+
+    ggplot2::scale_x_discrete(labels=nameCovariates[as.numeric(as.character(table$covariate))])
+
+
+
+}
+
+
+

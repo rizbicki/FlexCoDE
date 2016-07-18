@@ -242,3 +242,38 @@ predict.Forest=function(object,xNew,maxTerms=NULL)
 }
 
 
+
+#' Predict XGBoost
+#'
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
+#'
+#' @param object object of the class XGBoost
+#' @param xNew matrix with covariates where prediction will be calculated
+#' @param maxTerms maximum number of expansion coefficients
+#'
+#' @return returns matrix where element (i,j) contains the estimate of the j-th expansion coefficient for the j-th sample
+#' @export
+#'
+predict.XGBoost=function(object,xNew,maxTerms=NULL)
+{
+  if(class(object)!="XGBoost")
+    stop("Object has wrong class, should be XGBoost")
+
+  if(!is.null(maxTerms))
+  {
+    if(maxTerms==1)
+      return(matrix(1,nrow(xNew),1))
+    maxTerms=min(maxTerms,length(object$fittedReg))
+  } else {
+    maxTerms=length(object$fittedReg)+1
+  }
+
+  predictedValidation=apply(as.matrix(2:maxTerms),1,function(xx)
+  {
+    predicted=xgboost::predict(object$fittedReg[[xx-1]]$fit,xNew)
+    return(predicted)
+  })
+
+  return(cbind(1,predictedValidation))
+}
+

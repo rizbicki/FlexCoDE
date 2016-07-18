@@ -22,7 +22,8 @@ Imports:
     quadprog,
     splines,
     kernlab,
-    doParallel
+    doParallel,
+    xgboost
 Suggests:
     knitr,
     rmarkdown
