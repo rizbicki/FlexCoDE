@@ -209,40 +209,6 @@ predict.Lasso=function(object,xNew,maxTerms=NULL)
 }
 
 
-#' Predict Forest regression
-#'
-#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
-#'
-#' @param object object of the class Forest
-#' @param xNew matrix with covariates where prediction will be calculated
-#' @param maxTerms maximum number of expansion coefficients
-#'
-#' @return returns matrix where element (i,j) contains the estimate of the j-th expansion coefficient for the j-th sample
-#' @export
-#'
-predict.Forest=function(object,xNew,maxTerms=NULL)
-{
-  if(class(object)!="Forest")
-    stop("Object has wrong class, should be Forest")
-
-  if(!is.null(maxTerms))
-  {
-    maxTerms=min(maxTerms,length(object$fittedReg))
-  } else {
-    maxTerms=length(object$fittedReg)
-  }
-
-  predictedValidation=apply(as.matrix(1:maxTerms),1,function(xx)
-  {
-    predicted = predict(object$fittedReg[[xx]]$fit,newdata=xNew)
-    return(predicted)
-  })
-
-  return(predictedValidation)
-}
-
-
-
 #' Predict XGBoost
 #'
 #' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
@@ -276,4 +242,39 @@ predict.XGBoost=function(object,xNew,maxTerms=NULL)
 
   return(cbind(1,predictedValidation))
 }
+
+
+
+#' Predict Forest regression
+#'
+#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
+#'
+#' @param object object of the class Forest
+#' @param xNew matrix with covariates where prediction will be calculated
+#' @param maxTerms maximum number of expansion coefficients
+#'
+#' @return returns matrix where element (i,j) contains the estimate of the j-th expansion coefficient for the j-th sample
+#' @export
+#'
+predict.Forest=function(object,xNew,maxTerms=NULL)
+{
+  if(class(object)!="Forest")
+    stop("Object has wrong class, should be Forest")
+
+  if(!is.null(maxTerms))
+  {
+    maxTerms=min(maxTerms,length(object$fittedReg))
+  } else {
+    maxTerms=length(object$fittedReg)
+  }
+
+  predictedValidation=apply(as.matrix(1:maxTerms),1,function(xx)
+  {
+    predicted = predict(object$fittedReg[[xx]]$fit,newdata=xNew)
+    return(predicted)
+  })
+
+  return(predictedValidation)
+}
+
 

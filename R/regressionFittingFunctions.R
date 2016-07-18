@@ -616,7 +616,7 @@ print.Forest=function(regressionObject,bestI,nameCovariates)
 #' @param extra list with one components named p0Vec, which contains a vetor with different number of variables randomly sampled as candidates at each split of the forest regression (aka mtry in randomForest package); the function will choose the best value among them;  one component named ntree which contains the number of tree to be used by the forest (default is 500), and  one component named maxnodes which contains the number of f terminal nodes trees in the forest can have (if not given, trees are grown to the maximum possible). The list can also contain a component named
 #' nCores which contains the number of cores to be used for parallel computing. Default is one.
 #'
-#' @import randomForest
+#' @import XGBoost
 #'
 #' @return object of the class XGBoost containing information needed to perform prediction on new points
 #' @export
