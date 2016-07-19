@@ -35,23 +35,32 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
                      system="Fourier",
                      deltaGrid=seq(0,0.45,length.out = 15),chooseDelta=TRUE,verbose=TRUE)
 {
-  if(!is.vector(xTrain))
+  if(!is.matrix(xTrain))
     xTrain=as.matrix(xTrain)
 
-  if(!is.vector(xValidation))
+
+  if(!is.matrix(xValidation))
     xValidation=as.matrix(xValidation)
 
-  if(!is.vector(xTest))
-    xTest=as.matrix(xTest)
 
-  if(!is.vector(zTrain))
+  if(!is.null(xTest))
+  {
+    if(!is.matrix(xTest))
+      xTest=as.matrix(xTest)
+
+    if(!is.matrix(zTest))
+      zTest=as.matrix(zTest)
+
+  }
+
+
+  if(!is.matrix(zTrain))
     zTrain=as.matrix(zTrain)
 
-  if(!is.vector(zValidation))
+  if(!is.matrix(zValidation))
     zValidation=as.matrix(zValidation)
 
-  if(!is.vector(zTest))
-    zTest=as.matrix(zTest)
+
 
   objectCDE=NULL
   objectCDE$zMax=max(zTrain)
