@@ -538,7 +538,7 @@ regressionFunction.Forest=function(x,responses,extra=NULL)
                                           y=responsesTrain[,ii,drop=FALSE],
                                           mtry=p0Vec[s],
                                           importance = FALSE)
-      colnames(xValidation)=FALSE
+      colnames(xValidation)=NULL
       predito = predict(ajuste, newdata = xValidation)
       error[s]=mean((predito-responsesValidation[,ii,drop=FALSE])^2)
     }
