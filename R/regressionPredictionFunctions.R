@@ -270,6 +270,7 @@ predict.Forest=function(object,xNew,maxTerms=NULL)
 
   predictedValidation=apply(as.matrix(1:maxTerms),1,function(xx)
   {
+    colnames(xNew)=FALSE
     predicted = predict(object$fittedReg[[xx]]$fit,newdata=xNew)
     return(predicted)
   })
