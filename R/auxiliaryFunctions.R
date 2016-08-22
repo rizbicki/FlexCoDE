@@ -50,6 +50,9 @@ calculateBasis=function(z,nIMax,system)
   #th=0
   th=1e-6
   estimatesThresh[estimatesThresh<th]=0
+  
+  if(sum(estimatesThresh)==0)
+    return(matrix(ncol(estimatesThresh),1,ncol(estimatesThresh)))
 
   if(sum(as.vector(binSize*estimatesThresh))>1)
   {
