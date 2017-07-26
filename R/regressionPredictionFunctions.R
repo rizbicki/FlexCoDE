@@ -236,7 +236,7 @@ predict.XGBoost=function(object,xNew,maxTerms=NULL)
 
   predictedValidation=apply(as.matrix(2:maxTerms),1,function(xx)
   {
-    predicted=xgboost::predict(object$fittedReg[[xx-1]]$fit,xNew)
+    predicted=predict(object$fittedReg[[xx-1]]$fit,xNew)
     return(predicted)
   })
 
