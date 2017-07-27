@@ -12,6 +12,8 @@
 #' @param system Basis for z. Current options are "Fourier", "Cosine" and "discrete". Default is "Fourier"
 #' @param chooseDelta Should delta, the cutoff to remove spurious bumps, be chosen?
 #' @param deltaGrid Grid of threshold deltas (betwen 0 and 0.5). Default value is seq(0,0.4,0.05).
+#' @param zMin Minimum value z assumes. Default is min(zTrain).
+#' @param zMax Maximum value z assumes. Default is max(zTrain).
 #' @param verbose Should we print what we are doing? Default is TRUE.
 #'
 #' @return Returns the fitted estimated conditional density, and object of the class FlexCoDE. The return value is an object with the following components:
@@ -33,7 +35,8 @@
 fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,
                      nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,
                      system="Fourier",
-                     deltaGrid=seq(0,0.45,length.out = 15),chooseDelta=TRUE,verbose=TRUE)
+                     deltaGrid=seq(0,0.45,length.out = 15),chooseDelta=TRUE,verbose=TRUE,
+                     zMin=NULL,zMax=NULL)
 {
   if(!is.matrix(xTrain))
     xTrain=as.matrix(xTrain)
@@ -63,8 +66,8 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 
 
   objectCDE=NULL
-  objectCDE$zMax=max(zTrain)
-  objectCDE$zMin=min(zTrain)
+  objectCDE$zMax=ifelse(is.null(zMax),max(zTrain),zMax)
+  objectCDE$zMin=ifelse(is.null(zMin),min(zTrain),zMin)
   zTrain=(zTrain-objectCDE$zMin)/(objectCDE$zMax-objectCDE$zMin)
 
   class(objectCDE)="FlexCoDE"
