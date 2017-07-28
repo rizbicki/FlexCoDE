@@ -30,6 +30,7 @@ cosine_basis <- function(z, n_basis) {
   for (ii in 1:(n_basis - 1)) {
     basis[, ii + 1] <- sqrt(2) * cospi(ii * z)
   }
+  attr(basis, "levels") <- seq_len(n_basis)
   return(basis)
 }
 
@@ -46,8 +47,23 @@ fourier_basis <- function(z, n_basis) {
     basis[, 2 * ii] <- sqrt(2) * sinpi(2 * ii * z)
     basis[, 2 * ii + 1] <- sqrt(2) * cospi(2 * ii * z)
   }
+  attr(basis, "levels") <- seq_len(n_basis)
   return(basis)
 }
+
+
+.pow2seq <- function(n) {
+  seq <- rep(NA, n)
+  pow <- 1
+  for (ii in 1:n) {
+    if (ii >= (2 ^ pow)) {
+      pow <- pow + 1
+    }
+    seq[ii] <- pow
+  }
+  return(seq)
+}
+
 
 #' Evaluates Haar mother wavlet
 #' @param x: float, value at which to evaluate the wavlet
@@ -84,6 +100,7 @@ haar_basis <- function(z, n_basis) {
     basis[, ii] <- 2 ^ (kk / 2) * sapply(2 ^ kk * z - jj, .haar_phi)
   }
 
+  attr(basis, "levels") <- .pow2seq(n_basis)
   return(basis)
 }
 
@@ -114,6 +131,7 @@ daubechies_basis <- function(z, n_basis, n_aux_basis = max(n_basis, 2^12),
     basis <- t(basis)
   }
 
+  attr(basis, "levels") <- .pow2seq(n_basis)
   return(basis)
 }
 

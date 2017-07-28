@@ -94,14 +94,18 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 
   if(verbose) print("Tuning Number of Expansion Coefficients (I)")
   coefficientsXValidation=predict(objectCDE$regressionObject,xValidation)
-  term1=1/2*colMeans(coefficientsXValidation^2)
-  term1=cumsum(term1)
 
-  term2=colMeans(coefficientsXValidation*basisZValidation[,1:ncol(coefficientsXValidation),drop=F])
-  term2=cumsum(term2)
-  objectCDE$errors=term1-term2
-  objectCDE$bestI=which.min(objectCDE$errors)
-  objectCDE$bestError=min(objectCDE$errors)
+  # Find level of expansion which minimizes the loss
+  term1 <- 1/2*colMeans(coefficientsXValidation^2)
+  term2 <- colMeans(coefficientsXValidation*basisZValidation[,1:ncol(coefficientsXValidation),drop=F])
+
+  levels <- attr(basisZValidation, "levels")
+  objectCDE$errors <- sapply(unique(levels), function(level) {
+    return(sum(term1[levels <= level] - term2[levels <= level]))
+  })
+  best_level <- levels[which.min(objectCDE$errors)]
+  objectCDE$bestI <- max(which(levels <= best_level))
+  objectCDE$bestError <- min(objectCDE$errors)
 
   if(chooseDelta)
   {
