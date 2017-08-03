@@ -47,6 +47,9 @@ fourier_basis <- function(z, n_basis) {
     basis[, 2 * ii] <- sqrt(2) * sinpi(2 * ii * z)
     basis[, 2 * ii + 1] <- sqrt(2) * cospi(2 * ii * z)
   }
+  if (n_basis %% 2 == 0) {
+    basis[, n_basis] <- sqrt(2) * sinpi(n_basis * z)
+  }
   attr(basis, "levels") <- seq_len(n_basis)
   return(basis)
 }
