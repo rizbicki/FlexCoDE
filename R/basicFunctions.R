@@ -100,10 +100,11 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   term2 <- colMeans(coefficientsXValidation*basisZValidation[,1:ncol(coefficientsXValidation),drop=F])
 
   levels <- attr(basisZValidation, "levels")
-  objectCDE$errors <- sapply(unique(levels), function(level) {
+  uniq_levels <- unique(levels)
+  objectCDE$errors <- sapply(uniq_levels, function(level) {
     return(sum(term1[levels <= level] - term2[levels <= level]))
   })
-  best_level <- levels[which.min(objectCDE$errors)]
+  best_level <- uniq_levels[which.min(objectCDE$errors)]
   objectCDE$bestI <- max(which(levels <= best_level))
   objectCDE$bestError <- min(objectCDE$errors)
 
