@@ -62,8 +62,18 @@ fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
 # Plot estimated curves evaluates on new test points, and
 # compare with true conditional density
 predictedValues=predict(fit,xTest,B=500)
+
+# plot the conditional density estimate for the first sample:
 plot(predictedValues$z,predictedValues$CDE[1,])
+
+# add a line comparing it to the true density:
 lines(predictedValues$z,dnorm(predictedValues$z,xTest[1,1],0.1),col=2)
+
+# plot the conditional density estimate for the first sample:
+plot(predictedValues$z,predictedValues$CDE[2,])
+
+# add a line comparing it to the true density:
+lines(predictedValues$z,dnorm(predictedValues$z,xTest[2,1],0.1),col=2)
 
 
 }
