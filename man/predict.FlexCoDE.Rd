@@ -17,8 +17,8 @@ predict.FlexCoDE(objectCDE, xNew, B = 1000, predictionBandProb = FALSE)
 }
 \value{
 The return value is an object with the following components
-\item{z}{Points where the density was evaluate}
-\item{CDE}{Matrix with value of the density at points z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
+\item{z}{Grid of points where the density was evaluated}
+\item{CDE}{Matrix with value of the density at each point of the grid z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
 \item{th}{(If predictionBandProb is not FALSE) Threshold values for each estimated density. The region where estimated densities are above these values have the approximate coverage probability desired. See  \code{\link{plot.FlexCoDE}} for ploting these regions.}
 }
 \description{
