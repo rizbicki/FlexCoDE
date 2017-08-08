@@ -25,7 +25,46 @@ The return value is an object with the following components
 Evaluates the estimated  density of new observations (testing points) of a "FlexCoDE" object
 }
 \examples{
-# See \\code{\\link{fitFlexCoDE}}
+set.seed(400)
+
+# generate data
+n=1000
+d=10
+data=matrix(NA,n,d+1)
+data[,1:d]=matrix(rnorm(n*d),n,d)
+# generate response from a mixture
+data[,d+1]=data[,1]+rnorm(n,0,0.1)
+
+
+# determine sample sizes
+nTrain=round(0.7*n)
+nValidation=round(0.25*n)
+nTest=n-nTrain-nValidation
+
+# split data
+randomIndex=sample(1:n)
+xTrain=data[randomIndex[1:nTrain],1:d]
+xValidation=data[randomIndex[(nTrain+1):(nTrain+nValidation)],1:d]
+xTest=data[randomIndex[(nTrain+nValidation+1):n],1:d]
+zTrain=data[randomIndex[1:nTrain],d+1]
+zValidation=data[randomIndex[(nTrain+1):(nTrain+nValidation)],d+1]
+zTest=data[randomIndex[(nTrain+nValidation+1):n],d+1]
+
+
+############################################################
+# fit SpAM estimator (appropriate for sparse structure); we change
+######## default value of tuning parameters
+############################################################
+fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
+                nIMax = 50,regressionFunction = regressionFunction.SpAM,
+                regressionFunction.extra=list(sVec=round(seq(1,20,length.out = 5))))
+
+# Plot estimated curves evaluates on new test points, and
+# compare with true conditional density
+predictedValues=predict(fit,xTest,B=500)
+plot(predictedValues$z,predictedValues$CDE[1,])
+lines(predictedValues$z,dnorm(predictedValues$z,xTest[1,1],0.1),col=2)
+
 
 }
 

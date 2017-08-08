@@ -28,3 +28,4 @@ A matrix of dimension length(z) by n_basis with entries
 \description{
 Evaluates Daubechies basis for new observations
 }
+

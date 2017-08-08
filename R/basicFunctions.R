@@ -274,7 +274,7 @@ estimateErrorFlexCoDE=function(objectCDE,xTest,zTest,se=TRUE)
 #' \item{CDE}{Matrix with value of the density at points z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
 #' \item{th}{(If predictionBandProb is not FALSE) Threshold values for each estimated density. The region where estimated densities are above these values have the approximate coverage probability desired. See  \code{\link{plot.FlexCoDE}} for ploting these regions.}
 #'
-#' @examples # See \code{\link{fitFlexCoDE}}
+#' @example ../predict.R
 #'
 #' @export
 #'
@@ -282,6 +282,9 @@ predict.FlexCoDE=function(objectCDE,xNew,B=1000,predictionBandProb=FALSE)
 {
 
   if(is.vector(xNew))
+    xNew=as.matrix(xNew)
+
+  if(is.data.frame(xNew))
     xNew=as.matrix(xNew)
 
   if(class(objectCDE)!="FlexCoDE")

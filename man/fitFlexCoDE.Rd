@@ -7,8 +7,8 @@
 fitFlexCoDE(xTrain, zTrain, xValidation, zValidation, xTest = NULL,
   zTest = NULL, nIMax = min(25, length(zTrain)), regressionFunction,
   regressionFunction.extra = NULL, system = "Fourier", deltaGrid = seq(0,
-  0.45, length.out = 15), chooseDelta = TRUE, verbose = TRUE, zMin = NULL,
-  zMax = NULL)
+  0.45, length.out = 15), chooseDelta = TRUE, zMin = NULL, zMax = NULL,
+  verbose = TRUE)
 }
 \arguments{
 \item{xTrain}{Covariates x used to train the model (one observation per row)}
@@ -35,11 +35,11 @@ fitFlexCoDE(xTrain, zTrain, xValidation, zValidation, xTest = NULL,
 
 \item{chooseDelta}{Should delta, the cutoff to remove spurious bumps, be chosen?}
 
-\item{verbose}{Should we print what we are doing? Default is TRUE.}
-
 \item{zMin}{Minimum value z assumes. Default is min(zTrain).}
 
 \item{zMax}{Maximum value z assumes. Default is max(zTrain).}
+
+\item{verbose}{Should we print what we are doing? Default is TRUE.}
 }
 \value{
 Returns the fitted estimated conditional density, and object of the class FlexCoDE. The return value is an object with the following components:

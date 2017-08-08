@@ -23,3 +23,4 @@ A matrix of dimension length(z) by n_basis with entries
 \description{
 Calculate basis functions for new observations
 }
+
