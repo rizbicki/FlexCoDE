@@ -35,8 +35,8 @@
 fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,
                      nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,
                      system="Fourier",
-                     deltaGrid=seq(0,0.45,length.out = 15),chooseDelta=TRUE,verbose=TRUE,
-                     zMin=NULL,zMax=NULL)
+                     deltaGrid=seq(0,0.45,length.out = 15),chooseDelta=TRUE,
+                     zMin=NULL,zMax=NULL,verbose=TRUE)
 {
   if(!is.matrix(xTrain))
     xTrain=as.matrix(xTrain)

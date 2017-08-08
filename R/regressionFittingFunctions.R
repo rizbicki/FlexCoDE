@@ -642,7 +642,7 @@ regressionFunction.XGBoost=function(x,responses,extra=NULL)
 
 
   fittedReg <- foreach(ii=2:ncol(responses)) %dopar% {
-    bst <- xgboost::xgboost(data =x,label=responses[,ii,drop=FALSE],
+    bst <- xgboost::xgboost(names(x),data =x,label=responses[,ii,drop=FALSE],
                               nthread = 1,
                             nround = ninter,
                             objective="reg:linear",
@@ -677,17 +677,23 @@ regressionFunction.XGBoost=function(x,responses,extra=NULL)
 print.XGBoost=function(regressionObject,bestI,nameCovariates)
 {
 
-  print("Printing function not implemented for XGBoost yet")
-  return()
 
-  if(length(regressionObject$fittedReg[[1]]$importance)==1)
+  if(length(regressionObject$fittedReg[[1]]$importance$Gain)==1)
   {
-    importance=t(sapply(regressionObject$fittedReg,function(x)x$importance)[1:bestI])
+    importance=t(sapply(regressionObject$fittedReg,function(x)x$importance)[1:(bestI-1)])
 
   } else {
-    importance=sapply(regressionObject$fittedReg,function(x)x$importance)[,1:bestI]
+    importance=sapply(regressionObject$fittedReg,function(x)x$importance$Gain)[,1:(bestI-1)]
   }
   freq=rowMeans(importance)
+  if(!is.null(regressionObject$names.covariates))
+  {
+    freq=freq[match(regressionObject$fittedReg[[1]]$importance$Feature,
+                    nameCovariates)]
+  } else {
+    freq=freq[order(regressionObject$fittedReg[[1]]$importance$Feature)]
+  }
+
 
   table=data.frame(covariate=order(freq,decreasing = TRUE),frequency=sort(freq,decreasing =  TRUE))
   cat(paste("Average Importance of each covariate: \n"))
