@@ -41,12 +41,25 @@ fit$estimatedRisk
 print(fit)
 plot(fit,xTest,zTest)
 
+# Plot estimated curves evaluates on new test points, and
+# compare with true conditional density
+predictedValues=predict(fit,xTest,B=500)
+plot(predictedValues$z,predictedValues$CDE[1,])
+lines(predictedValues$z,dnorm(predictedValues$z,xTest[1,1],0.1),col=2)
+
 # Fit sparse additive FlexCoDE
 fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
             nIMax = 30,regressionFunction = regressionFunction.SpAM)
 fit$estimatedRisk
 print(fit)
 plot(fit,xTest,zTest)
+
+# Plot estimated curves evaluates on new test points, and
+# compare with true conditional density
+predictedValues=predict(fit,xTest,B=500)
+plot(predictedValues$z,predictedValues$CDE[1,])
+lines(predictedValues$z,dnorm(predictedValues$z,xTest[1,1],0.1),col=2)
+
 
 # Fit sparse additive FlexCoDE using 4 cores (i.e., using parallel computing)
 fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
