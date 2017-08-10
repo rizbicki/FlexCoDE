@@ -1,44 +1,31 @@
 #' Predict NN regression
 #'
-#' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
+#' This function is typically not directly used by the user; it is
+#' used inside \code{\link{fitFlexCoDE}}
 #'
 #' @param object object of the class NN
 #' @param xNew matrix with covariates where prediction will be calculated
 #' @param maxTerms maximum number of expansion coefficients
 #'
-#' @return returns matrix where element (i,j) contains the estimate of the j-th expansion coefficient for the j-th sample
+#' @return Returns a matrix where element (i, j) contains the estimate
+#'   of the j-th expansion coefficient for the i-th sample
 #' @export
-#'
-predict.NN=function(object,xNew,maxTerms=NULL)
-{
-  if(class(object)!="NN")
-    stop("Object has wrong class, should be NN")
+predict.NN <- function(object, xNew, maxTerms = NULL) {
+  n_predict <- nrow(xNew)
+  n_train <- nrow(object$xTrain)
+  maxTerms <- min(maxTerms, length(object$bestNN))
 
-  distanceNewTrain=fields::rdist(xNew,object$xTrain)
+  nns <- FNN::knnx.index(object$xTrain, xNew, k = n_train)
 
-  if(!is.null(maxTerms))
-  {
-    maxTerms=min(maxTerms,length(object$bestNN))
-  } else {
-    maxTerms=length(object$bestNN)
+  preds <- matrix(NA, n_predict, maxTerms)
+  for (ii in seq_len(n_predict)) {
+    for (jj in seq_len(maxTerms)) {
+      preds[ii, jj] <- mean(object$responsesTrain[nns[ii, seq_len(object$bestNN[jj])], jj])
+    }
   }
 
-
-  predictedValidation=t(apply(distanceNewTrain,1,function(xx) {
-    responsePredict=rep(NA,maxTerms)
-    for(kk in 1:maxTerms)
-    {
-      nearest=sort(xx,index.return=T)$ix[1:object$bestNN[kk]]
-      responsePredict[kk]=mean(object$responsesTrain[nearest,kk,drop=FALSE])
-    }
-    return(responsePredict)
-  }))
-  rm(distanceNewTrain)
-  gc(verbose = FALSE)
-
-  return(predictedValidation)
+  return(preds)
 }
-
 
 #' Predict NW regression
 #'

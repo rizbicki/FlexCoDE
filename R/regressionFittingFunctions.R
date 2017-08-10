@@ -8,48 +8,45 @@
 #'
 #' @return object of the class NN containing information need to perform prediction on new points
 #' @export
-regressionFunction.NN=function(x,responses,extra=NULL)
-{
-  # Both x and responses are matrices
-  n=dim(x)[1]
-  random=sample(1:n)
-  nTrain=round(0.7*n)
-  xTrain=x[random[1:nTrain],,drop=FALSE]
-  responsesTrain=responses[random[1:nTrain],,drop=FALSE]
-  xValidation=x[random[-c(1:nTrain)],,drop=FALSE]
-  responsesValidation=responses[random[-c(1:nTrain)],,drop=FALSE]
+regressionFunction.NN <- function(x, responses, extra = NULL) {
+  n_obs <- nrow(x)
+  n_basis <- ncol(responses)
+  n_train <- round(0.7 * n_obs)
 
-  distanceValidationTrain=fields::rdist(xValidation,xTrain)
+  random <- sample(n_obs)
+  train_ids <- random[1:n_train]
+  x_train <- x[train_ids, , drop = FALSE]
+  z_train <- responses[train_ids, , drop = FALSE]
 
-  nNeighVec=extra$nn
-  if(is.null(nNeighVec))
-    nNeighVec=round(seq(1,dim(responsesTrain)[1],length.out = 100))
+  n_validation <- n_obs - n_train
+  x_validation <- x[-train_ids, , drop = FALSE]
+  z_validation <- responses[-train_ids, , drop = FALSE]
 
+  nns <- FNN::knnx.index(x_train, x_validation, k = n_train)
 
-  error=matrix(NA,length(nNeighVec),dim(responsesTrain)[2])
-  for(ii in 1:length(nNeighVec))
-  {
-    predictedValidation=t(apply(distanceValidationTrain,1,function(xx) {
-      nearest=sort(xx,index.return=T)$ix[1:nNeighVec[ii]]
-      return(colMeans(responsesTrain[nearest,,drop=FALSE]))
-    }))
-    error[ii,]=colMeans((predictedValidation-responsesValidation)^2)
+  nNeighVec <- extra$nn
+  if (is.null(nNeighVec)) {
+    nNeighVec <- round(seq(1, n_train, length.out = 100))
+  }
+  n_k <- length(nNeighVec)
+
+  bestNN <- rep(NA, n_basis)
+  for (ii in 1:n_basis) {
+    errors <- rep(NA, n_validation)
+    for (kk in 1:n_k) {
+      z_predict <- rep(NA, n_validation)
+      for (jj in seq_len(n_validation)) {
+        z_predict[jj] <- mean(z_train[nns[jj, seq_len(nNeighVec[kk])], ii])
+      }
+      errors[kk] <- sum((z_predict - z_validation[, ii]) ^ 2)
+    }
+    bestNN[ii] <- nNeighVec[which.min(errors)]
   }
 
-  bestNN=apply(error,2,function(xx){
-    nNeighVec[which.min(xx)]
-  })
-  rm(distanceValidationTrain)
-  gc(verbose = FALSE)
-
-  regressionObject=NULL
-  regressionObject$bestNN=bestNN
-  regressionObject$xTrain=x
-  regressionObject$responsesTrain=responses
-  class(regressionObject)="NN"
-  rm(xTrain,responsesTrain)
-  gc(verbose=FALSE)
-  return(regressionObject)
+  return(structure(list(bestNN = bestNN,
+                        xTrain = x,
+                        responsesTrain = responses),
+                   class = "NN"))
 }
 
 #' Print function for object of the class NN
