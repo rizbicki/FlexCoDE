@@ -127,11 +127,11 @@ daubechies_basis <- function(z, n_basis, n_aux_basis = max(n_basis, 2^12),
   which_closest <- FNN::get.knnx(z_grid, as.matrix(z), k = 1)$nn.index
 
   aux[, 2:ncol(aux)] <- aux[, ncol(aux):2]
-  aux <- aux[, 1:n_basis]
+  aux <- aux[, 1:n_basis, drop = FALSE]
   basis <- aux[which_closest, ] / aux[1, 1]
 
-  if (!is.matrix(basis)) {
-    basis <- t(basis)
+  if (n_basis == 1) {
+    basis <- as.matrix(basis)
   }
 
   attr(basis, "levels") <- .pow2seq(n_basis)
