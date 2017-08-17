@@ -126,7 +126,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   if(!is.null(xTest)&!is.null(zTest))
   {
     if(verbose) print("Estimating risk on test set")
-    error=estimateErrorFlexCoDE(objectCDE,xTest,zTest,se=TRUE)
+    error <- estimateError(objectCDE, xTest, zTest, se = TRUE)
     objectCDE$estimatedRisk=error
   }
 
@@ -165,9 +165,7 @@ chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.
     {
       if(objectCDE$verbose) cat(paste(c(rep("|",ii),rep(" ",length(deltaGrid)-ii),"|\n"),collapse=""))
       objectCDE$bestDelta=deltaGrid[ii]
-      estimateErrors=estimateErrorFlexCoDE(objectCDE=objectCDE,
-                                           xTest=xValidation,
-                                           zTest=zValidation,se=FALSE)
+      estimateErrors <- estimateError(objectCDE, xValidation, zValidation, se = FALSE)
       error[ii]=estimateErrors
     }
     #plot(error)
@@ -181,9 +179,7 @@ chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.
     packages=sub("package:","",packages)
     error <- foreach(ii=1:length(deltaGrid),.packages = packages) %dopar% {
       objectCDE$bestDelta=deltaGrid[ii]
-      estimateErrors=estimateErrorFlexCoDE(objectCDE=objectCDE,
-                                           xTest=xValidation,
-                                           zTest=zValidation,se=FALSE)
+      estimateErrors <- estimateError(objectCDE, xValidation, zValidation, se = FALSE)
       return(estimateErrors)
 
     }
@@ -198,69 +194,67 @@ chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.
   return(bestDelta)
 }
 
+cde_loss <- function(pred, z_grid, z_test) {
+  pred <- pred$CDE * (max(z_grid) - min(z_grid))
+
+  colmeansComplete <- mean(colMeans(pred ^ 2))
+  sSquare <- mean(colmeansComplete)
+
+  n <- length(z_test)
+  predictedObserved <- apply(as.matrix(1:n), 1, function(xx) {
+    index <- which.min(abs(z_test[xx] - z_grid))
+    return(pred[xx, index])
+  })
+
+  likeli <- mean(predictedObserved)
+
+  return(sSquare / 2 - likeli)
+}
 
 #' Estimate error (risk) of FlexCoDE object via test set
 #'
-#' @param objectCDE is an object of the class FlexCoDEtypically typically fitted used \code{\link{fitFlexCoDE}} beforehand
-#' @param xTest Covariates x of the sample used to test the model (one observation per row)
-#' @param zTest Response z of the sample used to test the model (one observation per row)
-#' @param se Should standard error be computed? Default is TRUE
+#' @param obj is an object of the class FlexCoDE typically fitted used
+#'   \code{\link{fitFlexCoDE}}
+#' @param x_test Covariates for the sample used to test the model (one
+#'   observation per row)
+#' @param z_test Response for the sample used to test the model (one
+#'   observation per row)
+#' @param se Boolean flag determining if bootstrap standard error are
+#'   computed. Default is TRUE
+#' @param n_boot Number of bootstrap samples used to calculate
+#'   standard errors. Default is 500
+#' @param n_grid Number of grid points to evaluate conditional
+#'   density. Default is 500.
 #'
-#' @return Estimated error (with SE if desired)
+#' @return Estimated error (with SE if se = TRUE)
 #' @export
-#'
-estimateErrorFlexCoDE=function(objectCDE,xTest,zTest,se=TRUE)
-{
-  if(class(objectCDE)!="FlexCoDE")
-    stop("objectCDE should be of class FlexCoDE")
+estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500, n_grid = 500) {
+  if (!is.matrix(x_test)) {
+    x_test <- as.matrix(x_test)
+  }
 
-  if(is.vector(xTest))
-    xTest=as.matrix(xTest)
+  z_grid <- seq(obj$zMin, obj$zMax, length.out = n_grid)
+  predicted <- predict(obj, x_test, n_grid)
 
+  loss <- cde_loss(predicted, z_grid, z_test)
 
-  zGrid=seq(objectCDE$zMin[1],objectCDE$zMax[1],length.out=500)
+  if (!se) {
+    return(loss)
+  }
 
-  predictedComplete=predict(objectCDE,xNew = xTest,B=length(zGrid))
-  predictedComplete=predictedComplete$CDE*(objectCDE$zMax-objectCDE$zMin)
+  # Bootstrap standard errors
+  boot_losses <- replicate(n_boot, {
+    boot_ids <- sample(nrow(z_test), replace = TRUE)
 
-  colmeansComplete=colMeans(predictedComplete^2)
-  sSquare=mean(colmeansComplete)
+    predicted_boot <- predicted[boot_ids, , drop = FALSE]
+    z_boot <- z_test[boot_ids, , drop = FALSE]
 
-  n=length(zTest)
-  predictedObserved=apply(as.matrix(1:n),1,function(xx) { index=which.min(abs(zTest[xx]-zGrid))
-  return(predictedComplete[xx,index])
+    return(cde_loss(predicted_boot, z_grid, z_boot))
   })
-  likeli=mean(predictedObserved)
 
-  if(!se)
-    return(1/2*sSquare-likeli)
-
-  # Bootstrap
-  output=NULL
-  output$mean=1/2*sSquare-likeli
-
-  boot=1000
-  meanBoot=apply(as.matrix(1:boot),1,function(xx){
-    sampleBoot=sample(1:n,replace=T)
-
-    predictedCompleteBoot=predictedComplete[sampleBoot,]
-    zTestBoot=zTest[sampleBoot]
-
-    colmeansComplete=colMeans(predictedCompleteBoot^2)
-    sSquare=mean(colmeansComplete)
-
-    predictedObserved=apply(as.matrix(1:n),1,function(xx) { index=which.min(abs(zTestBoot[xx]-zGrid))
-    return(predictedCompleteBoot[xx,index])
-    })
-    likeli=mean(predictedObserved)
-    return(1/2*sSquare-likeli)
-  })
-  output$seBoot=sqrt(var(meanBoot))
-  return(output)
-
-
+  return(list(mean = loss,
+              se_boot = sqrt(var(boot_losses))))
 }
-
 
 #' Evaluates the estimated  density of new observations (testing points) of a "FlexCoDE" object
 #'
@@ -651,7 +645,7 @@ combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation,xTest=NULL,zTe
   if(!is.null(xTest)&!is.null(zTest))
   {
     if(returnValue$objectCDEs[[1]]$verbose) print("Estimating risk on test set")
-    error=estimateErrorCombined(returnValue,xTest,zTest,se=TRUE)
+    error=estimateError(returnValue,xTest,zTest,se=TRUE)
     returnValue$estimatedRisk=error
   }
 
@@ -888,67 +882,3 @@ plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest)
 
 
 }
-
-
-#' Estimate error (risk) of combinedFlexCoDE object via test set
-#'
-#' @param objectCombined Object of the class "combinedFlexCoDE", typically fitted used \code{\link{combineFlexCoDE}} beforehand
-#' @param xTest Covariates x of the sample used to test the model (one observation per row)
-#' @param zTest Response z of the sample used to test the model (one observation per row)
-#' @param se Should standard error be computed? Default is TRUE
-#'
-#' @return Estimated error (with SE if desired)
-#' @export
-#'
-estimateErrorCombined=function(objectCombined,xTest,zTest,se=TRUE)
-{
-
-  if(is.vector(xTest))
-    xTest=as.matrix(xTest)
-
-  if(class(objectCombined)!="combinedFlexCoDE")
-    stop("objectCombined should be of class combinedFlexCoDE")
-
-  zGrid=seq(objectCombined$objectCDEs[[1]]$zMin[1],objectCombined$objectCDEs[[1]]$zMax,length.out=500)
-
-  predictedComplete=predict(objectCombined,xNew = xTest,B=length(zGrid))
-  predictedComplete=predictedComplete$CDE*(objectCombined$objectCDEs[[1]]$zMax-objectCombined$objectCDEs[[1]]$zMin)
-
-  colmeansComplete=colMeans(predictedComplete^2)
-  sSquare=mean(colmeansComplete)
-
-  n=length(zTest)
-  predictedObserved=apply(as.matrix(1:n),1,function(xx) { index=which.min(abs(zTest[xx]-zGrid))
-  return(predictedComplete[xx,index])
-  })
-  likeli=mean(predictedObserved)
-
-  if(!se)
-    return(1/2*sSquare-likeli)
-
-  # Bootstrap
-  output=NULL
-  output$mean=1/2*sSquare-likeli
-
-  boot=1000
-  meanBoot=apply(as.matrix(1:boot),1,function(xx){
-    sampleBoot=sample(1:n,replace=T)
-
-    predictedCompleteBoot=predictedComplete[sampleBoot,]
-    zTestBoot=zTest[sampleBoot]
-
-    colmeansComplete=colMeans(predictedCompleteBoot^2)
-    sSquare=mean(colmeansComplete)
-
-    predictedObserved=apply(as.matrix(1:n),1,function(xx) { index=which.min(abs(zTestBoot[xx]-zGrid))
-    return(predictedCompleteBoot[xx,index])
-    })
-    likeli=mean(predictedObserved)
-    return(1/2*sSquare-likeli)
-  })
-  output$seBoot=sqrt(var(meanBoot))
-  return(output)
-
-
-}
-
