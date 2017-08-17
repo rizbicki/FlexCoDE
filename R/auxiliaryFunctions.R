@@ -138,115 +138,99 @@ daubechies_basis <- function(z, n_basis, n_aux_basis = max(n_basis, 2^12),
   return(basis)
 }
 
-.normalizeDensity=function(binSize,estimates,delta=0)
-{
-  # internal function of renormalization of density
-  estimates=matrix(estimates,1,length(estimates))
-  if(all(estimates<=0)) estimates=matrix(1,1,length(estimates))
-  estimatesThresh=estimates
-  #th=0
-  th=1e-6
-  estimatesThresh[estimatesThresh<th]=0
-  
-  if(sum(estimatesThresh)==0)
-    return(matrix(ncol(estimatesThresh),1,ncol(estimatesThresh)))
+#' Project onto density estimates
+#' Uses binary search to determine the correct cutoff
+normalize_density <- function(bin_size, estimates,
+                              tolerance = 1e-3, max_iters = 500) {
 
-  if(sum(as.vector(binSize*estimatesThresh))>1)
-  {
-    maxDensity=max(estimates)
-    minDensity=0
-    newXi=(maxDensity+minDensity)/2
-    eps=1
-    ii=1
-    while(ii<=500)
-    {
-
-      #estimatesNew=apply(as.matrix(estimates),2,function(xx)max(0,xx-newXi))
-
-      estimatesNew=estimates
-      estimatesNew[estimatesNew-newXi<0]=0
-      estimatesNew[estimatesNew-newXi>0]=(estimatesNew-newXi)[estimatesNew-newXi>0]
-
-
-      area=sum(as.vector(binSize*estimatesNew))
-      eps=abs(1-area)
-      if(eps<0.001) break; # level found
-      if(1>area) maxDensity=newXi
-      if(1<area) minDensity=newXi
-      newXi=(maxDensity+minDensity)/2
-      ii=ii+1
-    }
-    #estimatesNew=apply(as.matrix(estimates),2,function(xx)max(0,xx-newXi))
-
-    estimatesNew=estimates
-    estimatesNew[estimatesNew-newXi<0]=0
-    estimatesNew[estimatesNew-newXi>0]=(estimatesNew-newXi)[estimatesNew-newXi>0]
-
-    runs=rle(as.vector(estimatesNew)>0)
-    nRuns=length(runs$values)
-    jj=1
-    area=lower=upper=NULL
-    if(nRuns>2)
-    {
-      for(ii in 1:nRuns)
-      {
-        if(runs$values[ii]==FALSE) next;
-        whichMin=1
-        if(ii>1)
-        {
-          whichMin=sum(runs$lengths[1:(ii-1)])
-        }
-        whichMax=whichMin+runs$lengths[ii]
-        lower[jj]=whichMin # lower interval of component
-        upper[jj]=whichMax # upper interval of component
-        area[jj]=sum(as.vector(binSize*estimatesNew[whichMin:whichMax])) # total area of component
-        jj=jj+1
-      }
-
-      delta=min(delta,max(area))
-      for(ii in 1:length(area))
-      {
-        if(area[ii]<delta)
-          estimatesNew[lower[ii]:upper[ii]]=0
-      }
-      estimatesNew=estimatesNew/(binSize*sum(as.vector(estimatesNew)))
-    }
-
-    return(estimatesNew)
-  }
-  estimatesNew=as.vector(1/binSize*estimatesThresh/sum(as.vector(estimatesThresh)))
-
-  runs=rle(estimatesNew>0)
-  nRuns=length(runs$values)
-  jj=1
-  area=lower=upper=NULL
-  if(nRuns>2)
-  {
-    for(ii in 1:nRuns)
-    {
-      if(runs$values[ii]==FALSE) next;
-      whichMin=1
-      if(ii>1)
-      {
-        whichMin=sum(runs$lengths[1:(ii-1)])
-      }
-      whichMax=whichMin+runs$lengths[ii]
-      lower[jj]=whichMin # lower interval of component
-      upper[jj]=whichMax # upper interval of component
-      area[jj]=sum(as.vector(binSize*estimatesNew[whichMin:whichMax])) # total area of component
-      jj=jj+1
-    }
-    delta=min(delta,max(area))
-    for(ii in 1:length(area))
-    {
-      if(area[ii]<delta)
-        estimatesNew[lower[ii]:upper[ii]]=0
-    }
-    estimatesNew=estimatesNew/(binSize*sum(as.vector(estimatesNew)))
+  area <- sum(bin_size * estimates)
+  if (area < 1) {
+    return(estimates / (bin_size * sum(estimates)))
   }
 
-  return(estimatesNew)
+  upper <- max(estimates)
+  lower <- 0.0
+  middle <- (upper + lower) / 2
 
+  iter <- 1
+  while (iter <= max_iters) {
+    iter <- iter + 1
+
+    density <- pmax(0.0, estimates - middle)
+    area <- sum(bin_size * density)
+
+    if (abs(area - 1) < tolerance) {
+      break
+    }
+
+    if (area > 1) {
+      lower <- middle
+    } else {
+      upper <- middle
+    }
+    midde <- (upper + lower) / 2
+  }
+
+  return(pmax(estimates - middle, 0.0))
+}
+
+#' Removing bumps from density estimates
+#'
+#' @param binSize size of grid bins
+#' @param estiamtes vector of density estimates on a grid
+#' @param delta area threshold for removing a bump
+#'
+#' @return A vector of the density with bumps removed
+remove_bumps <- function(binSize, estimates, delta) {
+  runs <- rle(estimates > 0)
+  n_runs <- length(runs$values)
+
+  if (n_runs == 1) {
+    return(estimates)
+  }
+
+  lower <- c(1, cumsum(runs$lengths))
+  upper <- cumsum(runs$lengths)
+
+  for (ii in 1:n_runs) {
+    if (!runs$values[ii]) {
+      next
+    }
+    area <- sum(binSize *  estimates[lower[ii]:upper[ii]])
+    if (area < delta) {
+      estimates[lower[ii]:upper[ii]] <- 0.0
+    }
+  }
+
+  return(estimates)
+}
+
+#' Post process density estimate to normalize and remove bumps
+#'
+#' @param binSize size of grid bins
+#' @param estimates vector of density estimate on a grid
+#' @param delta parameter for removing bumps; default is 0.0 implying
+#'   no bump removal
+#' @param threshold parameter for discarding small densities; default
+#'   is 1e-6
+#'
+#' @return A vector of the density estimate
+post_process <- function(binSize, estimates, delta = 0.0, threshold = 1e-6) {
+  if (!is.vector(estimates)) {
+    estimates <- as.vector(estimates)
+  }
+
+  estimates[estimates < threshold] <- 0.0
+
+  if (all(estimates == 0)) {
+    warning("Density has only negative values; replacing with uniform density")
+    estimates[] <- 1.0
+  }
+
+  estimates <- normalize_density(binSize, estimates)
+  estimates <- remove_bumps(binSize, estimates, delta)
+
+  return(estimates)
 }
 
 

@@ -14,7 +14,7 @@
 #' @param deltaGrid Grid of threshold deltas (betwen 0 and 0.5). Default value is seq(0,0.4,0.05).
 #' @param zMin Minimum value z assumes. Default is min(zTrain).
 #' @param zMax Maximum value z assumes. Default is max(zTrain).
-#' @param verbose Should we print what we are doing? Default is TRUE.
+#' @param verbose Should we print what we are doing? Default is FALSE.
 #'
 #' @return Returns the fitted estimated conditional density, and object of the class FlexCoDE. The return value is an object with the following components:
 #' \item{zMin, zMax}{Minimum and maximum value of z}
@@ -36,7 +36,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
                      nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,
                      system="Fourier",
                      deltaGrid=seq(0,0.45,length.out = 15),chooseDelta=TRUE,
-                     zMin=NULL,zMax=NULL,verbose=TRUE)
+                     zMin=NULL,zMax=NULL,verbose=FALSE)
 {
   if(!is.matrix(xTrain))
     xTrain=as.matrix(xTrain)
@@ -108,25 +108,22 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   objectCDE$bestI <- max(which(levels <= best_level))
   objectCDE$bestError <- min(objectCDE$errors)
 
-  if(chooseDelta)
-  {
-    nCores=regressionFunction.extra$nCores
-    if(is.null(nCores))
-      nCores=1
+  if (chooseDelta) {
+    if (verbose) {
+      print("Choosing optimal cutoff Delta")
+    }
 
-    if(verbose) print("Choosing optimal cutoff Delta")
-    delta=chooseDelta(objectCDE, xValidation,
-                      objectCDE$zMin+(objectCDE$zMax-objectCDE$zMin)*zValidation,deltaGrid,
-                      nCores)
-    objectCDE$bestDelta=delta
+    objectCDE$bestDelta <- chooseDelta(objectCDE, xValidation,
+                                       objectCDE$zMin + (objectCDE$zMax - objectCDE$zMin) * zValidation,
+                                       deltaGrid)
   } else {
-    objectCDE$bestDelta=0
+    objectCDE$bestDelta <- 0.0
   }
 
   if(!is.null(xTest)&!is.null(zTest))
   {
     if(verbose) print("Estimating risk on test set")
-    error=estimateErrorFlexCoDE(objectCDE,xTest,zTest,se=TRUE)
+    error <- estimateError(objectCDE, xTest, zTest, se = TRUE)
     objectCDE$estimatedRisk=error
   }
 
@@ -141,126 +138,101 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 #'
 #' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @param objectCDE An object of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand
-#' @param xValidation Covariates x used to validate (tune) the model (one x observation per row).
-#' @param zValidation Responses z used to validate (tune) the model  (matrix with 1 column). Each row corresponds to a row of the xValidation argument
-#' @param nCores Number of cores to be used for parallel computing. Default is one.
+#' @param objectCDE An object of the class FlexCoDE with a fitted CDE,
+#'   typically fitted used \code{\link{fitFlexCoDE}} beforehand
+#' @param X Covariates used to validate (tune) the model (one x
+#'   observation per row).
+#' @param Z Responses used to validate (tune) the model (matrix with 1
+#'   column). Each row corresponds to a row of the xValidation
+#'   argument
 #'
-#' @return Best delta
-chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.05),nCores=1)
-{
-
-  if(is.vector(xValidation))
-    xValidation=as.matrix(xValidation)
-
-  if(class(objectCDE)!='FlexCoDE')
-    stop("objectCDE should be of class FlexCoDE")
-  error=rep(NA,length(deltaGrid))
-
-  if(nCores==1)
-  {
-    if(objectCDE$verbose) cat("\n Progress Bar:\n")
-
-    for(ii in 1:length(deltaGrid))
-    {
-      if(objectCDE$verbose) cat(paste(c(rep("|",ii),rep(" ",length(deltaGrid)-ii),"|\n"),collapse=""))
-      objectCDE$bestDelta=deltaGrid[ii]
-      estimateErrors=estimateErrorFlexCoDE(objectCDE=objectCDE,
-                                           xTest=xValidation,
-                                           zTest=zValidation,se=FALSE)
-      error[ii]=estimateErrors
-    }
-    #plot(error)
-  } else {
-
-    cl <- parallel::makeCluster(nCores)
-    doParallel::registerDoParallel(cl)
-
-    packages=search()
-    packages=packages[grep("package:",packages)]
-    packages=sub("package:","",packages)
-    error <- foreach(ii=1:length(deltaGrid),.packages = packages) %dopar% {
-      objectCDE$bestDelta=deltaGrid[ii]
-      estimateErrors=estimateErrorFlexCoDE(objectCDE=objectCDE,
-                                           xTest=xValidation,
-                                           zTest=zValidation,se=FALSE)
-      return(estimateErrors)
-
-    }
-    error=sapply(error,function(x)x)
-
-    parallel::stopCluster(cl)
+#' @return Value of delta for bump removal which minimizes CDE loss
+chooseDelta <- function(objectCDE, X, Z, delta_grid = seq(0.0, 0.4, 0.05)) {
+  if (!is.matrix(X)) {
+    X <- as.matrix(X)
   }
 
-  whichMin=(1:length(error))[error==min(error)]
-  bestDelta=deltaGrid[max(whichMin)]
+  preds <- predict(objectCDE, X, process = FALSE)
 
-  return(bestDelta)
+  bin_size <- diff(preds$z)[1]
+  estimates <- t(apply(preds$CDE, 1, function(xx) {
+    return(normalize_density(bin_size, xx))
+  }))
+
+  errors <- rep(NA, length(delta_grid))
+  for (ii in seq_along(delta_grid)) {
+    new_estimates <- t(apply(estimates, 1, function(xx) {
+      tmp <- remove_bumps(bin_size, xx, delta = delta_grid[ii])
+      return(normalize_density(bin_size, tmp))
+    }))
+
+    errors[ii] <- cde_loss(new_estimates, preds$z, Z)
+  }
+
+  return(delta_grid[max(which.min(errors))])
 }
 
+cde_loss <- function(pred, z_grid, z_test) {
+  pred <- pred * (max(z_grid) - min(z_grid))
+
+  colmeansComplete <- mean(colMeans(pred ^ 2))
+  sSquare <- mean(colmeansComplete)
+
+  n <- length(z_test)
+  predictedObserved <- apply(as.matrix(1:n), 1, function(xx) {
+    index <- which.min(abs(z_test[xx] - z_grid))
+    return(pred[xx, index])
+  })
+
+  likeli <- mean(predictedObserved)
+
+  return(sSquare / 2 - likeli)
+}
 
 #' Estimate error (risk) of FlexCoDE object via test set
 #'
-#' @param objectCDE is an object of the class FlexCoDEtypically typically fitted used \code{\link{fitFlexCoDE}} beforehand
-#' @param xTest Covariates x of the sample used to test the model (one observation per row)
-#' @param zTest Response z of the sample used to test the model (one observation per row)
-#' @param se Should standard error be computed? Default is TRUE
+#' @param obj is an object of the class FlexCoDE typically fitted used
+#'   \code{\link{fitFlexCoDE}}
+#' @param x_test Covariates for the sample used to test the model (one
+#'   observation per row)
+#' @param z_test Response for the sample used to test the model (one
+#'   observation per row)
+#' @param se Boolean flag determining if bootstrap standard error are
+#'   computed. Default is TRUE
+#' @param n_boot Number of bootstrap samples used to calculate
+#'   standard errors. Default is 500
+#' @param n_grid Number of grid points to evaluate conditional
+#'   density. Default is 500.
 #'
-#' @return Estimated error (with SE if desired)
+#' @return Estimated error (with SE if se = TRUE)
 #' @export
-#'
-estimateErrorFlexCoDE=function(objectCDE,xTest,zTest,se=TRUE)
-{
-  if(class(objectCDE)!="FlexCoDE")
-    stop("objectCDE should be of class FlexCoDE")
+estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500, n_grid = 500) {
+  if (!is.matrix(x_test)) {
+    x_test <- as.matrix(x_test)
+  }
 
-  if(is.vector(xTest))
-    xTest=as.matrix(xTest)
+  z_grid <- seq(obj$zMin, obj$zMax, length.out = n_grid)
+  predicted <- predict(obj, x_test, n_grid)
 
+  loss <- cde_loss(predicted$CDE, z_grid, z_test)
 
-  zGrid=seq(objectCDE$zMin[1],objectCDE$zMax[1],length.out=500)
+  if (!se) {
+    return(loss)
+  }
 
-  predictedComplete=predict(objectCDE,xNew = xTest,B=length(zGrid))
-  predictedComplete=predictedComplete$CDE*(objectCDE$zMax-objectCDE$zMin)
+  # Bootstrap standard errors
+  boot_losses <- replicate(n_boot, {
+    boot_ids <- sample(nrow(z_test), replace = TRUE)
 
-  colmeansComplete=colMeans(predictedComplete^2)
-  sSquare=mean(colmeansComplete)
+    predicted_boot <- predicted[boot_ids, , drop = FALSE]
+    z_boot <- z_test[boot_ids, , drop = FALSE]
 
-  n=length(zTest)
-  predictedObserved=apply(as.matrix(1:n),1,function(xx) { index=which.min(abs(zTest[xx]-zGrid))
-  return(predictedComplete[xx,index])
+    return(cde_loss(predicted_boot$CDE, z_grid, z_boot))
   })
-  likeli=mean(predictedObserved)
 
-  if(!se)
-    return(1/2*sSquare-likeli)
-
-  # Bootstrap
-  output=NULL
-  output$mean=1/2*sSquare-likeli
-
-  boot=1000
-  meanBoot=apply(as.matrix(1:boot),1,function(xx){
-    sampleBoot=sample(1:n,replace=T)
-
-    predictedCompleteBoot=predictedComplete[sampleBoot,]
-    zTestBoot=zTest[sampleBoot]
-
-    colmeansComplete=colMeans(predictedCompleteBoot^2)
-    sSquare=mean(colmeansComplete)
-
-    predictedObserved=apply(as.matrix(1:n),1,function(xx) { index=which.min(abs(zTestBoot[xx]-zGrid))
-    return(predictedCompleteBoot[xx,index])
-    })
-    likeli=mean(predictedObserved)
-    return(1/2*sSquare-likeli)
-  })
-  output$seBoot=sqrt(var(meanBoot))
-  return(output)
-
-
+  return(list(mean = loss,
+              se_boot = sqrt(var(boot_losses))))
 }
-
 
 #' Evaluates the estimated  density of new observations (testing points) of a "FlexCoDE" object
 #'
@@ -278,90 +250,55 @@ estimateErrorFlexCoDE=function(objectCDE,xTest,zTest,se=TRUE)
 #'
 #' @export
 #'
-predict.FlexCoDE=function(objectCDE,xNew,B=1000,predictionBandProb=FALSE)
-{
-
-  if(is.vector(xNew))
-    xNew=as.matrix(xNew)
-
-  if(is.data.frame(xNew))
-    xNew=as.matrix(xNew)
-
-  if(class(objectCDE)!="FlexCoDE")
-    stop("Object should be of type FlexCoDE")
-  zGrid=seq(from=0,to=1,length.out=B)
-
-  if(is.null(objectCDE$bestI))
-    objectCDE$bestI=objectCDE$nIMax
-
-  coeff=predict(objectCDE$regressionObject,xNew,
-                maxTerms=objectCDE$bestI)
-
-
-  basisZNew=calculateBasis(zGrid,objectCDE$bestI,
-                           objectCDE$system) # returns matrix length(z)xnIMax with the basis for z
-
-  estimates=coeff%*%t(basisZNew)
-
-  binSize=(1)/(B+1)
-
-  delta=ifelse(!is.null(objectCDE$bestDelta),objectCDE$bestDelta,0)
-
-
-  estimates=t(apply(estimates,1,function(xx).normalizeDensity(binSize,xx,delta)))
-
-  estimates=estimates/(objectCDE$zMax-objectCDE$zMin)
-  returnValue=NULL
-  returnValue$CDE=estimates
-  returnValue$z=seq(from=objectCDE$zMin,to=objectCDE$zMax,length.out=B)
-
-  if(predictionBandProb==FALSE)
-    return(returnValue)
-
-
-  th=matrix(NA,nrow(returnValue$CDE),1)
-  for(i in 1:nrow(returnValue$CDE))
-  {
-
-    th[i]=.findThresholdHPD((objectCDE$zMax-objectCDE$zMin)/B,returnValue$CDE[i,],predictionBandProb)
-
-
+predict.FlexCoDE <- function(obj, xNew, B = 1000, predictionBandProb = FALSE, process = TRUE) {
+  if (!is.matrix(xNew)) {
+    xNew <- as.matrix(xNew)
   }
 
-  returnValue$th=th
-  return(returnValue)
+  z_grid <- seq(0.0, 1.0, length.out = B)
 
-  # th=matrix(NA,nrow(returnValue$CDE),2)
-  # for(i in 1:nrow(returnValue$CDE))
-  # {
-  #   interval=.findThresholdSymmetricMode((objectCDE$zMax-objectCDE$zMin)/B,
-  #                                        returnValue$CDE[i,],
-  #                                        predictionBandProb)
-  #   intervalExtended=interval[1]:interval[2]
-  #   for(k in 1:length(intervalExtended))
-  #   {
-  #     if(returnValue$CDE[i,intervalExtended][k]==0)
-  #     {
-  #       interval[1]=interval[1]+1
-  #     } else {
-  #       break;
-  #     }
-  #   }
-  #   for(k in length(intervalExtended):1)
-  #   {
-  #     if(returnValue$CDE[i,intervalExtended][k]==0)
-  #     {
-  #       interval[2]=interval[2]-1
-  #     } else {
-  #       break;
-  #     }
-  #   }
-  #   th[i,1]=returnValue$z[interval[1]]
-  #   th[i,2]=returnValue$z[interval[2]]
-  # }
-  # returnValue$th=th
-  # return(returnValue)
+  if (!is.null(obj$bestI)) {
+    n_basis <- obj$bestI
+  } else {
+    n_basis <- obj$nIMax
+  }
 
+  coeff <- predict(obj$regressionObject, xNew, maxTerms = n_basis)
+
+  z_basis <- calculateBasis(z_grid, n_basis, obj$system)
+
+  estimates <- tcrossprod(coeff, z_basis)
+
+  if (!is.null(obj$bestDelta)) {
+    delta <- obj$bestDelta
+  } else {
+    delta <- 0.0
+  }
+
+  binSize <- 1 / (B + 1)
+
+  if (process) {
+    estimates <- t(apply(estimates, 1, function(xx) {
+      return(post_process(binSize, xx, delta = delta))
+    }))
+  }
+
+  estimates <- estimates / (obj$zMax - obj$zMin)
+
+  if (!predictionBandProb) {
+    return(list(CDE = estimates,
+                z = seq(obj$zMin, obj$zMax, length.out = B)))
+  }
+
+  th <- matrix(NA, nrow(returnValue$CDE), 1)
+  for (ii in 1:nrow(returnValue$CDE)) {
+    th[ii] = .findThresholdHPD((obj$zMax - obj$zMin) / B,
+                               estimates[ii, ], predictionBandProb)
+  }
+
+  return(list(CDE = estimates,
+              z = seq(obj$zMin, obj$zMax, length.out = B),
+              th = th))
 }
 
 #' Print object of classe FlexCoDE
@@ -651,7 +588,7 @@ combineFlexCoDE=function(objectCDE_binded,xValidation,zValidation,xTest=NULL,zTe
   if(!is.null(xTest)&!is.null(zTest))
   {
     if(returnValue$objectCDEs[[1]]$verbose) print("Estimating risk on test set")
-    error=estimateErrorCombined(returnValue,xTest,zTest,se=TRUE)
+    error=estimateError(returnValue,xTest,zTest,se=TRUE)
     returnValue$estimatedRisk=error
   }
 
@@ -888,67 +825,3 @@ plot.combinedFlexCoDE=function(objectCombined,xTest,zTest,nPlots=min(nrow(xTest)
 
 
 }
-
-
-#' Estimate error (risk) of combinedFlexCoDE object via test set
-#'
-#' @param objectCombined Object of the class "combinedFlexCoDE", typically fitted used \code{\link{combineFlexCoDE}} beforehand
-#' @param xTest Covariates x of the sample used to test the model (one observation per row)
-#' @param zTest Response z of the sample used to test the model (one observation per row)
-#' @param se Should standard error be computed? Default is TRUE
-#'
-#' @return Estimated error (with SE if desired)
-#' @export
-#'
-estimateErrorCombined=function(objectCombined,xTest,zTest,se=TRUE)
-{
-
-  if(is.vector(xTest))
-    xTest=as.matrix(xTest)
-
-  if(class(objectCombined)!="combinedFlexCoDE")
-    stop("objectCombined should be of class combinedFlexCoDE")
-
-  zGrid=seq(objectCombined$objectCDEs[[1]]$zMin[1],objectCombined$objectCDEs[[1]]$zMax,length.out=500)
-
-  predictedComplete=predict(objectCombined,xNew = xTest,B=length(zGrid))
-  predictedComplete=predictedComplete$CDE*(objectCombined$objectCDEs[[1]]$zMax-objectCombined$objectCDEs[[1]]$zMin)
-
-  colmeansComplete=colMeans(predictedComplete^2)
-  sSquare=mean(colmeansComplete)
-
-  n=length(zTest)
-  predictedObserved=apply(as.matrix(1:n),1,function(xx) { index=which.min(abs(zTest[xx]-zGrid))
-  return(predictedComplete[xx,index])
-  })
-  likeli=mean(predictedObserved)
-
-  if(!se)
-    return(1/2*sSquare-likeli)
-
-  # Bootstrap
-  output=NULL
-  output$mean=1/2*sSquare-likeli
-
-  boot=1000
-  meanBoot=apply(as.matrix(1:boot),1,function(xx){
-    sampleBoot=sample(1:n,replace=T)
-
-    predictedCompleteBoot=predictedComplete[sampleBoot,]
-    zTestBoot=zTest[sampleBoot]
-
-    colmeansComplete=colMeans(predictedCompleteBoot^2)
-    sSquare=mean(colmeansComplete)
-
-    predictedObserved=apply(as.matrix(1:n),1,function(xx) { index=which.min(abs(zTestBoot[xx]-zGrid))
-    return(predictedCompleteBoot[xx,index])
-    })
-    likeli=mean(predictedObserved)
-    return(1/2*sSquare-likeli)
-  })
-  output$seBoot=sqrt(var(meanBoot))
-  return(output)
-
-
-}
-
