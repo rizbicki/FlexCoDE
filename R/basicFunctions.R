@@ -108,19 +108,16 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   objectCDE$bestI <- max(which(levels <= best_level))
   objectCDE$bestError <- min(objectCDE$errors)
 
-  if(chooseDelta)
-  {
-    nCores=regressionFunction.extra$nCores
-    if(is.null(nCores))
-      nCores=1
+  if (chooseDelta) {
+    if (verbose) {
+      print("Choosing optimal cutoff Delta")
+    }
 
-    if(verbose) print("Choosing optimal cutoff Delta")
-    delta=chooseDelta(objectCDE, xValidation,
-                      objectCDE$zMin+(objectCDE$zMax-objectCDE$zMin)*zValidation,deltaGrid,
-                      nCores)
-    objectCDE$bestDelta=delta
+    objectCDE$bestDelta <- chooseDelta(objectCDE, xValidation,
+                                       objectCDE$zMin + (objectCDE$zMax - objectCDE$zMin) * zValidation,
+                                       deltaGrid)
   } else {
-    objectCDE$bestDelta=0
+    objectCDE$bestDelta <- 0.0
   }
 
   if(!is.null(xTest)&!is.null(zTest))
@@ -141,61 +138,42 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 #'
 #' This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 #'
-#' @param objectCDE An object of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand
-#' @param xValidation Covariates x used to validate (tune) the model (one x observation per row).
-#' @param zValidation Responses z used to validate (tune) the model  (matrix with 1 column). Each row corresponds to a row of the xValidation argument
-#' @param nCores Number of cores to be used for parallel computing. Default is one.
+#' @param objectCDE An object of the class FlexCoDE with a fitted CDE,
+#'   typically fitted used \code{\link{fitFlexCoDE}} beforehand
+#' @param X Covariates used to validate (tune) the model (one x
+#'   observation per row).
+#' @param Z Responses used to validate (tune) the model (matrix with 1
+#'   column). Each row corresponds to a row of the xValidation
+#'   argument
 #'
-#' @return Best delta
-chooseDelta = function(objectCDE, xValidation,zValidation,deltaGrid=seq(0,0.4,0.05),nCores=1)
-{
-
-  if(is.vector(xValidation))
-    xValidation=as.matrix(xValidation)
-
-  if(class(objectCDE)!='FlexCoDE')
-    stop("objectCDE should be of class FlexCoDE")
-  error=rep(NA,length(deltaGrid))
-
-  if(nCores==1)
-  {
-    if(objectCDE$verbose) cat("\n Progress Bar:\n")
-
-    for(ii in 1:length(deltaGrid))
-    {
-      if(objectCDE$verbose) cat(paste(c(rep("|",ii),rep(" ",length(deltaGrid)-ii),"|\n"),collapse=""))
-      objectCDE$bestDelta=deltaGrid[ii]
-      estimateErrors <- estimateError(objectCDE, xValidation, zValidation, se = FALSE)
-      error[ii]=estimateErrors
-    }
-    #plot(error)
-  } else {
-
-    cl <- parallel::makeCluster(nCores)
-    doParallel::registerDoParallel(cl)
-
-    packages=search()
-    packages=packages[grep("package:",packages)]
-    packages=sub("package:","",packages)
-    error <- foreach(ii=1:length(deltaGrid),.packages = packages) %dopar% {
-      objectCDE$bestDelta=deltaGrid[ii]
-      estimateErrors <- estimateError(objectCDE, xValidation, zValidation, se = FALSE)
-      return(estimateErrors)
-
-    }
-    error=sapply(error,function(x)x)
-
-    parallel::stopCluster(cl)
+#' @return Value of delta for bump removal which minimizes CDE loss
+chooseDelta <- function(objectCDE, X, Z, delta_grid = seq(0.0, 0.4, 0.05)) {
+  if (!is.matrix(X)) {
+    X <- as.matrix(X)
   }
 
-  whichMin=(1:length(error))[error==min(error)]
-  bestDelta=deltaGrid[max(whichMin)]
+  preds <- predict(objectCDE, X, process = FALSE)
 
-  return(bestDelta)
+  bin_size <- diff(preds$z)[1]
+  estimates <- t(apply(preds$CDE, 1, function(xx) {
+    return(normalize_density(bin_size, xx))
+  }))
+
+  errors <- rep(NA, length(delta_grid))
+  for (ii in seq_along(delta_grid)) {
+    new_estimates <- t(apply(estimates, 1, function(xx) {
+      tmp <- remove_bumps(bin_size, xx, delta = delta_grid[ii])
+      return(normalize_density(bin_size, tmp))
+    }))
+
+    errors[ii] <- cde_loss(new_estimates, preds$z, Z)
+  }
+
+  return(delta_grid[max(which.min(errors))])
 }
 
 cde_loss <- function(pred, z_grid, z_test) {
-  pred <- pred$CDE * (max(z_grid) - min(z_grid))
+  pred <- pred * (max(z_grid) - min(z_grid))
 
   colmeansComplete <- mean(colMeans(pred ^ 2))
   sSquare <- mean(colmeansComplete)
@@ -236,7 +214,7 @@ estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500, n_grid =
   z_grid <- seq(obj$zMin, obj$zMax, length.out = n_grid)
   predicted <- predict(obj, x_test, n_grid)
 
-  loss <- cde_loss(predicted, z_grid, z_test)
+  loss <- cde_loss(predicted$CDE, z_grid, z_test)
 
   if (!se) {
     return(loss)
@@ -249,7 +227,7 @@ estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500, n_grid =
     predicted_boot <- predicted[boot_ids, , drop = FALSE]
     z_boot <- z_test[boot_ids, , drop = FALSE]
 
-    return(cde_loss(predicted_boot, z_grid, z_boot))
+    return(cde_loss(predicted_boot$CDE, z_grid, z_boot))
   })
 
   return(list(mean = loss,
@@ -272,7 +250,7 @@ estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500, n_grid =
 #'
 #' @export
 #'
-predict.FlexCoDE <- function(obj, xNew, B = 1000, predictionBandProb = FALSE) {
+predict.FlexCoDE <- function(obj, xNew, B = 1000, predictionBandProb = FALSE, process = TRUE) {
   if (!is.matrix(xNew)) {
     xNew <- as.matrix(xNew)
   }
@@ -299,9 +277,11 @@ predict.FlexCoDE <- function(obj, xNew, B = 1000, predictionBandProb = FALSE) {
 
   binSize <- 1 / (B + 1)
 
-  estimates <- t(apply(estimates, 1, function(xx) {
-    return(post_process(binSize,xx,delta))
-  }))
+  if (process) {
+    estimates <- t(apply(estimates, 1, function(xx) {
+      return(post_process(binSize, xx, delta = delta))
+    }))
+  }
 
   estimates <- estimates / (obj$zMax - obj$zMin)
 
