@@ -272,90 +272,53 @@ estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500, n_grid =
 #'
 #' @export
 #'
-predict.FlexCoDE=function(objectCDE,xNew,B=1000,predictionBandProb=FALSE)
-{
-
-  if(is.vector(xNew))
-    xNew=as.matrix(xNew)
-
-  if(is.data.frame(xNew))
-    xNew=as.matrix(xNew)
-
-  if(class(objectCDE)!="FlexCoDE")
-    stop("Object should be of type FlexCoDE")
-  zGrid=seq(from=0,to=1,length.out=B)
-
-  if(is.null(objectCDE$bestI))
-    objectCDE$bestI=objectCDE$nIMax
-
-  coeff=predict(objectCDE$regressionObject,xNew,
-                maxTerms=objectCDE$bestI)
-
-
-  basisZNew=calculateBasis(zGrid,objectCDE$bestI,
-                           objectCDE$system) # returns matrix length(z)xnIMax with the basis for z
-
-  estimates=coeff%*%t(basisZNew)
-
-  binSize=(1)/(B+1)
-
-  delta=ifelse(!is.null(objectCDE$bestDelta),objectCDE$bestDelta,0)
-
-
-  estimates=t(apply(estimates,1,function(xx).normalizeDensity(binSize,xx,delta)))
-
-  estimates=estimates/(objectCDE$zMax-objectCDE$zMin)
-  returnValue=NULL
-  returnValue$CDE=estimates
-  returnValue$z=seq(from=objectCDE$zMin,to=objectCDE$zMax,length.out=B)
-
-  if(predictionBandProb==FALSE)
-    return(returnValue)
-
-
-  th=matrix(NA,nrow(returnValue$CDE),1)
-  for(i in 1:nrow(returnValue$CDE))
-  {
-
-    th[i]=.findThresholdHPD((objectCDE$zMax-objectCDE$zMin)/B,returnValue$CDE[i,],predictionBandProb)
-
-
+predict.FlexCoDE <- function(obj, xNew, B = 1000, predictionBandProb = FALSE) {
+  if (!is.matrix(xNew)) {
+    xNew <- as.matrix(xNew)
   }
 
-  returnValue$th=th
-  return(returnValue)
+  z_grid <- seq(0.0, 1.0, length.out = B)
 
-  # th=matrix(NA,nrow(returnValue$CDE),2)
-  # for(i in 1:nrow(returnValue$CDE))
-  # {
-  #   interval=.findThresholdSymmetricMode((objectCDE$zMax-objectCDE$zMin)/B,
-  #                                        returnValue$CDE[i,],
-  #                                        predictionBandProb)
-  #   intervalExtended=interval[1]:interval[2]
-  #   for(k in 1:length(intervalExtended))
-  #   {
-  #     if(returnValue$CDE[i,intervalExtended][k]==0)
-  #     {
-  #       interval[1]=interval[1]+1
-  #     } else {
-  #       break;
-  #     }
-  #   }
-  #   for(k in length(intervalExtended):1)
-  #   {
-  #     if(returnValue$CDE[i,intervalExtended][k]==0)
-  #     {
-  #       interval[2]=interval[2]-1
-  #     } else {
-  #       break;
-  #     }
-  #   }
-  #   th[i,1]=returnValue$z[interval[1]]
-  #   th[i,2]=returnValue$z[interval[2]]
-  # }
-  # returnValue$th=th
-  # return(returnValue)
+  if (!is.null(obj$bestI)) {
+    n_basis <- obj$bestI
+  } else {
+    n_basis <- obj$nIMax
+  }
 
+  coeff <- predict(obj$regressionObject, xNew, maxTerms = n_basis)
+
+  z_basis <- calculateBasis(z_grid, n_basis, obj$system)
+
+  estimates <- tcrossprod(coeff, z_basis)
+
+  if (!is.null(obj$bestDelta)) {
+    delta <- obj$bestDelta
+  } else {
+    delta <- 0.0
+  }
+
+  binSize <- 1 / (B + 1)
+
+  estimates <- t(apply(estimates, 1, function(xx) {
+    return(post_process(binSize,xx,delta))
+  }))
+
+  estimates <- estimates / (obj$zMax - obj$zMin)
+
+  if (!predictionBandProb) {
+    return(list(CDE = estimates,
+                z = seq(obj$zMin, obj$zMax, length.out = B)))
+  }
+
+  th <- matrix(NA, nrow(returnValue$CDE), 1)
+  for (ii in 1:nrow(returnValue$CDE)) {
+    th[ii] = .findThresholdHPD((obj$zMax - obj$zMin) / B,
+                               estimates[ii, ], predictionBandProb)
+  }
+
+  return(list(CDE = estimates,
+              z = seq(obj$zMin, obj$zMax, length.out = B),
+              th = th))
 }
 
 #' Print object of classe FlexCoDE

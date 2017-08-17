@@ -223,7 +223,7 @@ predict.FlexCoDEKernel=function(objectCDE,kernelNewTrain,B=1000,predictionBandPr
   delta=ifelse(!is.null(objectCDE$bestDelta),objectCDE$bestDelta,0)
 
 
-  estimates=t(apply(estimates,1,function(xx).normalizeDensity(binSize,xx,delta)))
+  estimates=t(apply(estimates,1,function(xx) post_process(binSize,xx,delta)))
 
   estimates=estimates/(objectCDE$zMax-objectCDE$zMin)
   returnValue=NULL
