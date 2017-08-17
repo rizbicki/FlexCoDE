@@ -14,7 +14,7 @@
 #' @param deltaGrid Grid of threshold deltas (betwen 0 and 0.5). Default value is seq(0,0.4,0.05).
 #' @param zMin Minimum value z assumes. Default is min(zTrain).
 #' @param zMax Maximum value z assumes. Default is max(zTrain).
-#' @param verbose Should we print what we are doing? Default is TRUE.
+#' @param verbose Should we print what we are doing? Default is FALSE.
 #'
 #' @return Returns the fitted estimated conditional density, and object of the class FlexCoDE. The return value is an object with the following components:
 #' \item{zMin, zMax}{Minimum and maximum value of z}
@@ -36,7 +36,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
                      nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,
                      system="Fourier",
                      deltaGrid=seq(0,0.45,length.out = 15),chooseDelta=TRUE,
-                     zMin=NULL,zMax=NULL,verbose=TRUE)
+                     zMin=NULL,zMax=NULL,verbose=FALSE)
 {
   if(!is.matrix(xTrain))
     xTrain=as.matrix(xTrain)
