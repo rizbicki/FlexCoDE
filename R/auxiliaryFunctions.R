@@ -143,9 +143,9 @@ daubechies_basis <- function(z, n_basis, n_aux_basis = max(n_basis, 2^12),
 normalize_density <- function(bin_size, estimates,
                               tolerance = 1e-3, max_iters = 500) {
 
-  area <- sum(bin_size * estimates)
+  area <- bin_size * sum(estimates)
   if (area < 1) {
-    return(estimates / (bin_size * sum(estimates)))
+    return(pmax(estimates / area, 0.0))
   }
 
   upper <- max(estimates)
@@ -156,8 +156,8 @@ normalize_density <- function(bin_size, estimates,
   while (iter <= max_iters) {
     iter <- iter + 1
 
-    density <- pmax(0.0, estimates - middle)
-    area <- sum(bin_size * density)
+    density <- pmax(estimates - middle, 0.0)
+    area <- bin_size * sum(density)
 
     if (abs(area - 1) < tolerance) {
       break
