@@ -189,14 +189,14 @@ remove_bumps <- function(binSize, estimates, delta) {
     return(estimates)
   }
 
-  lower <- c(1, cumsum(runs$lengths))
+  lower <- c(1, 1 + cumsum(runs$lengths))
   upper <- cumsum(runs$lengths)
 
   for (ii in 1:n_runs) {
     if (!runs$values[ii]) {
       next
     }
-    area <- sum(binSize *  estimates[lower[ii]:upper[ii]])
+    area <- binSize * sum(estimates[lower[ii]:upper[ii]])
     if (area < delta) {
       estimates[lower[ii]:upper[ii]] <- 0.0
     }
