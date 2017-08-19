@@ -229,6 +229,7 @@ post_process <- function(binSize, estimates, delta = 0.0, threshold = 1e-6) {
 
   estimates <- normalize_density(binSize, estimates)
   estimates <- remove_bumps(binSize, estimates, delta)
+  estimates <- normalize_density(binSize, estimates)
 
   return(estimates)
 }
