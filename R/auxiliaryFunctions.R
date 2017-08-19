@@ -168,7 +168,7 @@ normalize_density <- function(bin_size, estimates,
     } else {
       upper <- middle
     }
-    midde <- (upper + lower) / 2
+    middle <- (upper + lower) / 2
   }
 
   return(pmax(estimates - middle, 0.0))
