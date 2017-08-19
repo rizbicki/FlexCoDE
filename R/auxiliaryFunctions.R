@@ -143,9 +143,9 @@ daubechies_basis <- function(z, n_basis, n_aux_basis = max(n_basis, 2^12),
 normalize_density <- function(bin_size, estimates,
                               tolerance = 1e-3, max_iters = 500) {
 
-  area <- sum(bin_size * estimates)
+  area <- bin_size * sum(estimates)
   if (area < 1) {
-    return(estimates / (bin_size * sum(estimates)))
+    return(pmax(estimates / area, 0.0))
   }
 
   upper <- max(estimates)
@@ -156,8 +156,8 @@ normalize_density <- function(bin_size, estimates,
   while (iter <= max_iters) {
     iter <- iter + 1
 
-    density <- pmax(0.0, estimates - middle)
-    area <- sum(bin_size * density)
+    density <- pmax(estimates - middle, 0.0)
+    area <- bin_size * sum(density)
 
     if (abs(area - 1) < tolerance) {
       break
@@ -168,7 +168,7 @@ normalize_density <- function(bin_size, estimates,
     } else {
       upper <- middle
     }
-    midde <- (upper + lower) / 2
+    middle <- (upper + lower) / 2
   }
 
   return(pmax(estimates - middle, 0.0))
@@ -189,14 +189,14 @@ remove_bumps <- function(binSize, estimates, delta) {
     return(estimates)
   }
 
-  lower <- c(1, cumsum(runs$lengths))
+  lower <- c(1, 1 + cumsum(runs$lengths))
   upper <- cumsum(runs$lengths)
 
   for (ii in 1:n_runs) {
     if (!runs$values[ii]) {
       next
     }
-    area <- sum(binSize *  estimates[lower[ii]:upper[ii]])
+    area <- binSize * sum(estimates[lower[ii]:upper[ii]])
     if (area < delta) {
       estimates[lower[ii]:upper[ii]] <- 0.0
     }
@@ -229,6 +229,7 @@ post_process <- function(binSize, estimates, delta = 0.0, threshold = 1e-6) {
 
   estimates <- normalize_density(binSize, estimates)
   estimates <- remove_bumps(binSize, estimates, delta)
+  estimates <- normalize_density(binSize, estimates)
 
   return(estimates)
 }

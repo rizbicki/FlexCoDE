@@ -154,6 +154,8 @@ chooseDelta <- function(objectCDE, X, Z, delta_grid = seq(0.0, 0.4, 0.05)) {
 
   preds <- predict(objectCDE, X, process = FALSE)
 
+  preds$CDE <- preds$CDE * (objectCDE$zMax - objectCDE$zMin)
+
   bin_size <- diff(preds$z)[1]
   estimates <- t(apply(preds$CDE, 1, function(xx) {
     return(normalize_density(bin_size, xx))
@@ -172,9 +174,15 @@ chooseDelta <- function(objectCDE, X, Z, delta_grid = seq(0.0, 0.4, 0.05)) {
   return(delta_grid[max(which.min(errors))])
 }
 
+#' Calculate CDE loss
+#'
+#' @param pred a matrix of conditional density estimates; rows correspond to
+#' densities on z_grid and columns correspond to observations z_test.
+#' @param z_grid a vector of grid points at which pred is evaluated.
+#' @param z_test a vector of observed z-values.
+#'
+#' @return The estimated CDE loss for the predict estimates
 cde_loss <- function(pred, z_grid, z_test) {
-  pred <- pred * (max(z_grid) - min(z_grid))
-
   colmeansComplete <- mean(colMeans(pred ^ 2))
   sSquare <- mean(colmeansComplete)
 
