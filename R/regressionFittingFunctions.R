@@ -30,18 +30,14 @@ regressionFunction.NN <- function(x, responses, extra = NULL) {
   }
   n_k <- length(nNeighVec)
 
-  bestNN <- rep(NA, n_basis)
-  for (ii in 1:n_basis) {
-    errors <- rep(NA, n_validation)
+  errors <- matrix(0.0, n_basis, n_k)
+  for (ii in seq_len(n_validation)) {
     for (kk in 1:n_k) {
-      z_predict <- rep(NA, n_validation)
-      for (jj in seq_len(n_validation)) {
-        z_predict[jj] <- mean(z_train[nns[jj, seq_len(nNeighVec[kk])], ii])
-      }
-      errors[kk] <- sum((z_predict - z_validation[, ii]) ^ 2)
+      z_predict <- colMeans(z_train[nns[ii, seq_len(nNeighVec[kk])], , drop = FALSE])
+      errors[, kk] <- errors[, kk] + (z_predict - z_validation[ii, ]) ^ 2
     }
-    bestNN[ii] <- nNeighVec[which.min(errors)]
   }
+  bestNN <- nNeighVec[apply(errors, 1, which.min)]
 
   return(structure(list(bestNN = bestNN,
                         xTrain = x,
