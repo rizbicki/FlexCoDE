@@ -2,6 +2,8 @@
 
 Implements *FlexCoDE*, Flexible Conditional Density Estimator, in R.
 
+More on FlexCoDE: Izbicki, R.; Lee, A.B. [Converting High-Dimensional Regression to High-Dimensional Conditional Density Estimation](https://projecteuclid.org/euclid.ejs/1499133755). Eletronic Journal of Statistics, 2017
+
 
 To install the package, run
 
