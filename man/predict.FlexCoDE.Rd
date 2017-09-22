@@ -4,21 +4,22 @@
 \alias{predict.FlexCoDE}
 \title{Evaluates the estimated  density of new observations (testing points) of a "FlexCoDE" object}
 \usage{
-predict.FlexCoDE(objectCDE, xNew, B = 1000, predictionBandProb = FALSE)
+predict.FlexCoDE(obj, xNew, B = 1000, predictionBandProb = FALSE,
+  process = TRUE)
 }
 \arguments{
-\item{objectCDE}{Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand}
-
 \item{xNew}{Matrix with nTest rows and same number of columns as xTrain, containing x's for which the estimates are desired.}
 
 \item{B}{Number of point where f(z|x) will be evaluated (on the z scale). This will be equally spaced between zMin and zMax}
 
 \item{predictionBandProb}{Either a number indicating the probability for the highest predictive density region desired  or FALSE if bands are not desired. Default is FALSE}
+
+\item{objectCDE}{Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand}
 }
 \value{
 The return value is an object with the following components
-\item{z}{Grid of points where the density was evaluated}
-\item{CDE}{Matrix with value of the density at each point of the grid z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
+\item{z}{Points where the density was evaluate}
+\item{CDE}{Matrix with value of the density at points z. Each row corresponds to a different observation x (i-th row of CDE corresponds to i-th row of xTest).}
 \item{th}{(If predictionBandProb is not FALSE) Threshold values for each estimated density. The region where estimated densities are above these values have the approximate coverage probability desired. See  \code{\link{plot.FlexCoDE}} for ploting these regions.}
 }
 \description{
@@ -62,18 +63,8 @@ fit=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
 # Plot estimated curves evaluates on new test points, and
 # compare with true conditional density
 predictedValues=predict(fit,xTest,B=500)
-
-# plot the conditional density estimate for the first sample:
 plot(predictedValues$z,predictedValues$CDE[1,])
-
-# add a line comparing it to the true density:
 lines(predictedValues$z,dnorm(predictedValues$z,xTest[1,1],0.1),col=2)
-
-# plot the conditional density estimate for the first sample:
-plot(predictedValues$z,predictedValues$CDE[2,])
-
-# add a line comparing it to the true density:
-lines(predictedValues$z,dnorm(predictedValues$z,xTest[2,1],0.1),col=2)
 
 
 }

@@ -20,3 +20,4 @@ A matrix of dimension length(z) by n_basis with entries
 \description{
 Evaluates Haar basis for new observations
 }
+

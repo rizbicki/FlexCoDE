@@ -8,7 +8,7 @@ fitFlexCoDE(xTrain, zTrain, xValidation, zValidation, xTest = NULL,
   zTest = NULL, nIMax = min(25, length(zTrain)), regressionFunction,
   regressionFunction.extra = NULL, system = "Fourier", deltaGrid = seq(0,
   0.45, length.out = 15), chooseDelta = TRUE, zMin = NULL, zMax = NULL,
-  verbose = TRUE)
+  verbose = FALSE)
 }
 \arguments{
 \item{xTrain}{Covariates x used to train the model (one observation per row)}
@@ -25,9 +25,19 @@ fitFlexCoDE(xTrain, zTrain, xValidation, zValidation, xTest = NULL,
 
 \item{nIMax}{Maximum possible number of components of the series expansion (that is, the function will find the best I<nIMax). Default is 100}
 
-\item{regressionFunction}{a function indicating which regression method will be used to estimate the expansion coefficients. Currently can be one of}
+\item{regressionFunction}{a function indicating which regression method will be used
+to estimate the expansion coefficients.
+Currently can be one of regressionFunction.NN, regressionFunction.NW,
+regressionFunction.SpAM, regressionFunction.Series,
+regressionFunction.Lasso, regressionFunction.Forest or
+regressionFunction.XGBoost.
+Type ?regressionFunction.XX to find out more about method XX.}
 
-\item{regressionFunction.extra}{extra parameters to be sent to regression function; see the regression you want to use to check what are the available parameters. The argument nCores which contains the number of cores to be used for parallel computing. Default is one.}
+\item{regressionFunction.extra}{extra parameters to be sent to
+regression function; see the regression you want
+ to use to check what are the available parameters.
+ The argument nCores which contains the number of cores to be used
+ for parallel computing. Default is one.}
 
 \item{system}{Basis for z. Current options are "Fourier", "Cosine" and "discrete". Default is "Fourier"}
 
@@ -39,7 +49,7 @@ fitFlexCoDE(xTrain, zTrain, xValidation, zValidation, xTest = NULL,
 
 \item{zMax}{Maximum value z assumes. Default is max(zTrain).}
 
-\item{verbose}{Should we print what we are doing? Default is TRUE.}
+\item{verbose}{Should we print what we are doing? Default is FALSE.}
 }
 \value{
 Returns the fitted estimated conditional density, and object of the class FlexCoDE. The return value is an object with the following components:

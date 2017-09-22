@@ -14,9 +14,11 @@ predict.NN(object, xNew, maxTerms = NULL)
 \item{maxTerms}{maximum number of expansion coefficients}
 }
 \value{
-returns matrix where element (i,j) contains the estimate of the j-th expansion coefficient for the j-th sample
+Returns a matrix where element (i, j) contains the estimate
+  of the j-th expansion coefficient for the i-th sample
 }
 \description{
-This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
+This function is typically not directly used by the user; it is
+used inside \code{\link{fitFlexCoDE}}
 }
 

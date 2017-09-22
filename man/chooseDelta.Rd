@@ -4,20 +4,21 @@
 \alias{chooseDelta}
 \title{Choose threshold value to remove spurius bumps}
 \usage{
-chooseDelta(objectCDE, xValidation, zValidation, deltaGrid = seq(0, 0.4,
-  0.05), nCores = 1)
+chooseDelta(objectCDE, X, Z, delta_grid = seq(0, 0.4, 0.05))
 }
 \arguments{
-\item{objectCDE}{An object of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand}
+\item{objectCDE}{An object of the class FlexCoDE with a fitted CDE,
+typically fitted used \code{\link{fitFlexCoDE}} beforehand}
 
-\item{xValidation}{Covariates x used to validate (tune) the model (one x observation per row).}
+\item{X}{Covariates used to validate (tune) the model (one x
+observation per row).}
 
-\item{zValidation}{Responses z used to validate (tune) the model  (matrix with 1 column). Each row corresponds to a row of the xValidation argument}
-
-\item{nCores}{Number of cores to be used for parallel computing. Default is one.}
+\item{Z}{Responses used to validate (tune) the model (matrix with 1
+column). Each row corresponds to a row of the xValidation
+argument}
 }
 \value{
-Best delta
+Value of delta for bump removal which minimizes CDE loss
 }
 \description{
 This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}

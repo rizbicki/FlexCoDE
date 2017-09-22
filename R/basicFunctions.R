@@ -7,8 +7,18 @@
 #' @param xTest Covariates x used to estimate risk of final model (one observation per row; same number of columns as xTrain). Default is NULL
 #' @param zTest Responses z used to estimate risk of final model  (matrix with one column; one observation per row). Default is NULL
 #' @param nIMax Maximum possible number of components of the series expansion (that is, the function will find the best I<nIMax). Default is 100
-#' @param regressionFunction a function indicating which regression method will be used to estimate the expansion coefficients. Currently can be one of
-#' @param regressionFunction.extra extra parameters to be sent to regression function; see the regression you want to use to check what are the available parameters. The argument nCores which contains the number of cores to be used for parallel computing. Default is one.
+#' @param regressionFunction a function indicating which regression method will be used
+#' to estimate the expansion coefficients.
+#' Currently can be one of regressionFunction.NN, regressionFunction.NW,
+#' regressionFunction.SpAM, regressionFunction.Series,
+#' regressionFunction.Lasso, regressionFunction.Forest or
+#' regressionFunction.XGBoost.
+#' Type ?regressionFunction.XX to find out more about method XX.
+#' @param regressionFunction.extra extra parameters to be sent to
+#' regression function; see the regression you want
+#'  to use to check what are the available parameters.
+#'  The argument nCores which contains the number of cores to be used
+#'  for parallel computing. Default is one.
 #' @param system Basis for z. Current options are "Fourier", "Cosine" and "discrete". Default is "Fourier"
 #' @param chooseDelta Should delta, the cutoff to remove spurious bumps, be chosen?
 #' @param deltaGrid Grid of threshold deltas (betwen 0 and 0.5). Default value is seq(0,0.4,0.05).
