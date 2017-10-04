@@ -214,15 +214,16 @@ cde_loss <- function(pred, z_grid, z_test) {
 #'
 #' @return Estimated error (with SE if se = TRUE)
 #' @export
-estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500, n_grid = 500) {
-  if (!is.matrix(x_test)) {
-    x_test <- as.matrix(x_test)
-  }
+estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500,
+                          n_grid = 100) {
+  x_test <- as.matrix(x_test)
+  z_test <- as.matrix(z_test)
 
-  z_grid <- seq(obj$zMin, obj$zMax, length.out = n_grid)
-  predicted <- predict(obj, x_test, n_grid)
+  pred_obj <- predict(obj, x_test, n_grid)
+  cde_test <- pred_obj$CDE
+  z_grid <- pred_obj$z
 
-  loss <- cde_loss(predicted$CDE, z_grid, z_test)
+  loss <- cde_loss(cde_test, z_grid, z_test)
 
   if (!se) {
     return(loss)
@@ -232,10 +233,10 @@ estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500, n_grid =
   boot_losses <- replicate(n_boot, {
     boot_ids <- sample(nrow(z_test), replace = TRUE)
 
-    predicted_boot <- predicted[boot_ids, , drop = FALSE]
+    cde_boot <- cde_test[boot_ids, , drop = FALSE]
     z_boot <- z_test[boot_ids, , drop = FALSE]
 
-    return(cde_loss(predicted_boot$CDE, z_grid, z_boot))
+    return(cde_loss(cde_boot, z_grid, z_boot))
   })
 
   return(list(mean = loss,
