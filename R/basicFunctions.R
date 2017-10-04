@@ -176,25 +176,26 @@ chooseDelta <- function(objectCDE, X, Z, delta_grid = seq(0.0, 0.4, 0.05)) {
 
 #' Calculate CDE loss
 #'
-#' @param pred a matrix of conditional density estimates; rows correspond to
-#' densities on z_grid and columns correspond to observations z_test.
+#' @param pred a matrix of conditional density estimates; rows
+#'   correspond to densities on z_grid and columns correspond to
+#'   observations z_test.
 #' @param z_grid a vector of grid points at which pred is evaluated.
 #' @param z_test a vector of observed z-values.
 #'
 #' @return The estimated CDE loss for the predict estimates
 cde_loss <- function(pred, z_grid, z_test) {
-  colmeansComplete <- mean(colMeans(pred ^ 2))
-  sSquare <- mean(colmeansComplete)
+  z_grid <- as.matrix(z_grid)
 
-  n <- length(z_test)
-  predictedObserved <- apply(as.matrix(1:n), 1, function(xx) {
-    index <- which.min(abs(z_test[xx] - z_grid))
-    return(pred[xx, index])
-  })
+  z_min <- apply(z_grid, 2, min)
+  z_max <- apply(z_grid, 2, max)
+  z_delta <- prod(z_max - z_min) / nrow(z_grid)
 
-  likeli <- mean(predictedObserved)
+  integrals <- z_delta * sum(pred ^ 2)
 
-  return(sSquare / 2 - likeli)
+  nn_ids <- cbind(1:nrow(z_test), FNN::knnx.index(z_grid, z_test, k = 1))
+  likeli <- mean(pred[nn_ids])
+
+  return(integrals - 2 * likeli)
 }
 
 #' Estimate error (risk) of FlexCoDE object via test set
