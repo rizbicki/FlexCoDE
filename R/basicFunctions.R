@@ -190,7 +190,7 @@ cde_loss <- function(pred, z_grid, z_test) {
   z_max <- apply(z_grid, 2, max)
   z_delta <- prod(z_max - z_min) / nrow(z_grid)
 
-  integrals <- z_delta * sum(pred ^ 2)
+  integrals <- z_delta * sum(pred ^ 2) / nrow(z_grid)
 
   nn_ids <- cbind(1:nrow(z_test), FNN::knnx.index(z_grid, z_test, k = 1))
   likeli <- mean(pred[nn_ids])
