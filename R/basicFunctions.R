@@ -310,8 +310,8 @@ predict.FlexCoDE <- function(obj, xNew, B = 1000, predictionBandProb = FALSE, pr
                 z = seq(obj$zMin, obj$zMax, length.out = B)))
   }
 
-  th <- matrix(NA, nrow(returnValue$CDE), 1)
-  for (ii in 1:nrow(returnValue$CDE)) {
+  th <- matrix(NA, nrow(estimates), 1)
+  for (ii in 1:nrow(estimates)) {
     th[ii] = .findThresholdHPD((obj$zMax - obj$zMin) / B,
                                estimates[ii, ], predictionBandProb)
   }
