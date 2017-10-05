@@ -20,8 +20,10 @@
 #'  The argument nCores which contains the number of cores to be used
 #'  for parallel computing. Default is one.
 #' @param system Basis for z. Current options are "Fourier", "Cosine" and "discrete". Default is "Fourier"
-#' @param chooseDelta Should delta, the cutoff to remove spurious bumps, be chosen?
+#' @param chooseDelta Should delta, the cutoff to remove spurious bumps, be chosen? Default is TRUE
 #' @param deltaGrid Grid of threshold deltas (betwen 0 and 0.5). Default value is seq(0,0.4,0.05).
+#' @param chooseSharpen Should alpha, the parameter to sharpen the final estimate, be chosen? Default is FALSE
+#' @param sharpenGrid Grid of sharpen parameters alpha. Default value is seq(0.01,10,length.out = 20).
 #' @param zMin Minimum value z assumes. Default is min(zTrain).
 #' @param zMax Maximum value z assumes. Default is max(zTrain).
 #' @param verbose Should we print what we are doing? Default is FALSE.
@@ -37,15 +39,18 @@
 #' \item{bestI}{Optimal number of I according to validation set}
 #' \item{bestError}{Estimated error of model with bestI expansion terms according to validation set}
 #' \item{bestDelta}{Optimal value of threshold delta according to validation set}
+#' \item{bestAlpha}{Optimal value of alpha according to validation set}
 #' \item{estimatedRisk}{(If user provides xTest and zTest) Estimated risk (error) according to test set)}
 #'
 #' @example ../testPackage.R
 #'
 #' @export
 fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL,
-                     nIMax=min(25,length(zTrain)),regressionFunction,regressionFunction.extra=NULL,
+                     nIMax=min(25,length(zTrain)),regressionFunction,
+                     regressionFunction.extra=NULL,
                      system="Fourier",
                      deltaGrid=seq(0,0.45,length.out = 15),chooseDelta=TRUE,
+                     sharpenGrid=seq(0.01,10,length.out = 20),chooseSharpen=FALSE,
                      zMin=NULL,zMax=NULL,verbose=FALSE)
 {
   if(!is.matrix(xTrain))
@@ -130,6 +135,19 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
     objectCDE$bestDelta <- 0.0
   }
 
+  if (chooseSharpen) {
+    if (verbose) {
+      print("Choosing optimal sharpen parameter alpha")
+    }
+
+    objectCDE$bestAlpha <- chooseSharpen(objectCDE, xValidation,
+                                         objectCDE$zMin + (objectCDE$zMax - objectCDE$zMin) * zValidation,
+                                         sharpenGrid)
+  } else {
+    objectCDE$bestAlpha <- 1.0
+  }
+
+
   if(!is.null(xTest)&!is.null(zTest))
   {
     if(verbose) print("Estimating risk on test set")
@@ -142,6 +160,45 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 
 
   return(objectCDE)
+}
+
+#' Fits flexZBoost
+#'
+#' Wrapper for fitFlexCoDE for the special case of flexZBoost
+#'
+#' @param xTrain Covariates x used to train the model (one observation per row)
+#' @param zTrain Responses z used to train the model  (matrix with one column; one observation per row)
+#' @param xValidation Covariates x used to tune the model (one observation per row; same number of columns as xTrain)
+#' @param zValidation Responses z used to tune the model  (matrix with one column; one observation per row)
+#' @param xTest Covariates x used to estimate risk of final model (one observation per row; same number of columns as xTrain). Default is NULL
+#' @param zTest Responses z used to estimate risk of final model  (matrix with one column; one observation per row). Default is NULL
+#' @param chooseSharpen Should alpha, the parameter to sharpen the final estimate, be chosen? Default is TRUE
+#' @param ... additional arguments to fitFlexCoDE
+#'
+#' @return Returns the fitted estimated conditional density, and object of the class FlexCoDE. The return value is an object with the following components:
+#' \item{zMin, zMax}{Minimum and maximum value of z}
+#' \item{nIMax}{Maximum number of expansion coefficients (user input). Default is minimum between 25 and number of training samples.}
+#' \item{system}{Basis used for expanding the response}
+#' \item{zTrain}{zTrain (user input)}
+#' \item{xTrain}{xTrain (user input)}
+#' \item{regressionObject}{Object with fitted regressions. Class and content depend on which regression method was chosen by user}
+#' \item{errors}{Estimated errors for each value of I (number of expansion coefficients) using validation set}
+#' \item{bestI}{Optimal number of I according to validation set}
+#' \item{bestError}{Estimated error of model with bestI expansion terms according to validation set}
+#' \item{bestDelta}{Optimal value of threshold delta according to validation set}
+#' \item{bestAlpha}{Optimal value of alpha according to validation set}
+#' \item{estimatedRisk}{(If user provides xTest and zTest) Estimated risk (error) according to test set)}
+#'
+#'
+#' @export
+flexZBoost=function(xTrain,zTrain,xValidation,zValidation,
+                    xTest=NULL,zTest=NULL,chooseSharpen=TRUE,...)
+{
+  return(fitFlexCoDE(xTrain=xTrain,zTrain=zTrain,xValidation=xValidation,
+                     zValidation=zValidation,
+                     xTest=xTest,zTest=zTest,chooseSharpen=chooseSharpen,
+                     regressionFunction = regressionFunction.XGBoost,
+                     ...))
 }
 
 #' Choose threshold value to remove spurius bumps
@@ -184,6 +241,43 @@ chooseDelta <- function(objectCDE, X, Z, delta_grid = seq(0.0, 0.4, 0.05)) {
   return(delta_grid[max(which.min(errors))])
 }
 
+
+#' Choose sharpen parameter of a conditional density estimator
+#'
+#' Chooses optimal alpha for the new conditional density
+#' estimator f(z|x) <- f^alpha(z|x).
+#'
+#' @param objectCDE An object of the class FlexCoDE with a fitted CDE,
+#'   typically fitted used \code{\link{fitFlexCoDE}} beforehand
+#' @param X Covariates used to validate (tune) the model (one x
+#'   observation per row).
+#' @param Z Responses used to validate (tune) the model (matrix with 1
+#'   column). Each row corresponds to a row of the xValidation
+#'   argument
+#' @param alpha_grid Grid of values of alpha
+#'
+#' @return Value of alpha which minimizes CDE loss
+chooseSharpen <- function(objectCDE, X, Z, alpha_grid=seq(0.01,10,length.out = 20)) {
+  if (!is.matrix(X)) {
+    X <- as.matrix(X)
+  }
+
+  preds <- predict(objectCDE, X, process = TRUE)
+  bin_size <- diff(preds$z)[1]
+
+
+  errors <- rep(NA, length(alpha_grid))
+  for (ii in seq_along(alpha_grid)) {
+    new_estimates=(preds$CDE)^alpha_grid[ii]
+    # reescale so that it is a proper density
+    new_estimates=(new_estimates/rowSums(new_estimates))/bin_size
+    errors[ii] <- cde_loss(new_estimates, preds$z, Z)
+  }
+
+  return(alpha_grid[max(which.min(errors))])
+}
+
+
 #' Calculate CDE loss
 #'
 #' @param pred a matrix of conditional density estimates; rows
@@ -200,7 +294,7 @@ cde_loss <- function(pred, z_grid, z_test) {
   z_max <- apply(z_grid, 2, max)
   z_delta <- prod(z_max - z_min) / nrow(z_grid)
 
-  integrals <- z_delta * sum(pred ^ 2) / nrow(z_grid)
+  integrals <- z_delta * sum(pred ^ 2) / nrow(pred)
 
   nn_ids <- cbind(1:nrow(z_test), FNN::knnx.index(z_grid, z_test, k = 1))
   likeli <- mean(pred[nn_ids])
@@ -226,7 +320,7 @@ cde_loss <- function(pred, z_grid, z_test) {
 #' @return Estimated error (with SE if se = TRUE)
 #' @export
 estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500,
-                          n_grid = 100) {
+                          n_grid = 1000) {
   x_test <- as.matrix(x_test)
   z_test <- as.matrix(z_test)
 
@@ -295,11 +389,18 @@ predict.FlexCoDE <- function(obj, xNew, B = 1000, predictionBandProb = FALSE, pr
     delta <- 0.0
   }
 
+  if (!is.null(obj$bestAlpha)) {
+    alpha <- obj$bestAlpha
+  } else {
+    alpha <- 1.0
+  }
+
+
   binSize <- 1 / (B + 1)
 
   if (process) {
     estimates <- t(apply(estimates, 1, function(xx) {
-      return(post_process(binSize, xx, delta = delta))
+      return(post_process(binSize, xx, delta = delta,alpha=alpha))
     }))
   }
 

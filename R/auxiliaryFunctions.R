@@ -205,6 +205,22 @@ remove_bumps <- function(binSize, estimates, delta) {
   return(estimates)
 }
 
+#' Sharpen estimated of a conditional density estimator
+#'
+#' @param binSize size of grid bins
+#' @param estimates vector of density estimates on a grid
+#' @param alpha sharpen coefficient
+#'
+#' @return A vector of the sharp density
+sharpen <- function(binSize, estimates, alpha) {
+  new_estimates=(estimates)^alpha
+  # reescale so that it is a proper density
+  new_estimates=(new_estimates/sum(new_estimates))/binSize
+
+  return(new_estimates)
+}
+
+
 #' Post process density estimate to normalize and remove bumps
 #'
 #' @param binSize size of grid bins
@@ -215,7 +231,9 @@ remove_bumps <- function(binSize, estimates, delta) {
 #'   is 1e-6
 #'
 #' @return A vector of the density estimate
-post_process <- function(binSize, estimates, delta = 0.0, threshold = 1e-6) {
+post_process <- function(binSize, estimates, delta = 0.0,
+                         threshold = 1e-6,
+                         alpha=1) {
   if (!is.vector(estimates)) {
     estimates <- as.vector(estimates)
   }
@@ -228,8 +246,16 @@ post_process <- function(binSize, estimates, delta = 0.0, threshold = 1e-6) {
   }
 
   estimates <- normalize_density(binSize, estimates)
-  estimates <- remove_bumps(binSize, estimates, delta)
-  estimates <- normalize_density(binSize, estimates)
+  if(delta!=0)
+  {
+    estimates <- remove_bumps(binSize, estimates, delta)
+    estimates <- normalize_density(binSize, estimates)
+  }
+  if(alpha!=1)
+  {
+    estimates <- sharpen(binSize, estimates,alpha)
+    estimates <- normalize_density(binSize, estimates)
+  }
 
   return(estimates)
 }
