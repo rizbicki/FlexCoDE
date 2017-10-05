@@ -85,7 +85,7 @@ plot(fit,xTest,zTest)
 
 # FlexZBoost
 
-{\tt FlexZBoost} is a particular realization of {\tt FlexZBoost}, where we use XGBoost  for the regression part, as these techniques scale well for massive data.  There is an additional tuning parameter
+FlexZBoost is a particular realization of FlexCode, where we use XGBoost  for the regression part, as these techniques scale well for massive data.  There is an additional tuning parameter
 in FlexZBoost: an exponent $\alpha$ that we use to sharpen the computed density estimates $\widehat{f}(z|x)$, according to $\widetilde{f}(z|x) \propto \widehat{f}(z|x)^\alpha$.
 
 
