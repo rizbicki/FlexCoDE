@@ -3,13 +3,13 @@
 Implements *FlexCoDE*, Flexible Conditional Density Estimator, in R.
 
 FlexCode  is a general-purpose methodology for converting any conditional mean point estimator of $z$ to a conditional {\em density} estimator $f(z \vert x)$, where $x$  represents the covariates. The key idea is to expand the unknown function $f(z \vert x)$ in an orthonormal basis $\{\phi_i(z)\}_{i}$:
-\begin{equation}
-f(z|x)=\sum_{i}\beta_{i }(x)\phi_i(z). \label{eq::series_expansion}
-\end{equation}
+
+$$f(z|x)=\sum_{i}\beta_{i }(x)\phi_i(z). $$
+
 By the orthogonality property, the expansion coefficients are just conditional means 
-\begin{equation}
-\beta_{i }(x) =  \mathbb{E}\left[\phi_i(z)|x\right] \equiv \int f(z|x)   \phi_i(z) dz.
-\end{equation}
+
+$$\beta_{i }(x) =  \mathbb{E}\left[\phi_i(z)|x\right] \equiv \int f(z|x)   \phi_i(z) dz.$$
+
 These coefficients can easily be estimated from data by regression. 
 
 More on FlexCoDE: Izbicki, R.; Lee, A.B. [Converting High-Dimensional Regression to High-Dimensional Conditional Density Estimation](https://projecteuclid.org/euclid.ejs/1499133755). Eletronic Journal of Statistics, 2017
@@ -85,5 +85,14 @@ plot(fit,xTest,zTest)
 
 # FlexZBoost
 
-{\tt FlexZBoost} is a particular realization of {\tt FlexZBoost}, where we use XGBoost  for the regression part, as these techniques scale well for massive data.  There are two tuning parameters in our estimate: (i) the number of terms, $I$, in the series expansion in Equation~\ref{eq::series_expansion}, and (ii) an exponent $\alpha$ that we use to sharpen the computed density estimates $\widehat{f}(z|x)$, according to $\widetilde{f}(z|x) \propto \widehat{f}(z|x)^\alpha$.
+{\tt FlexZBoost} is a particular realization of {\tt FlexZBoost}, where we use XGBoost  for the regression part, as these techniques scale well for massive data.  There is an additional tuning parameter
+in FlexZBoost: an exponent $\alpha$ that we use to sharpen the computed density estimates $\widehat{f}(z|x)$, according to $\widetilde{f}(z|x) \propto \widehat{f}(z|x)^\alpha$.
 
+
+A simple example using the data generated above:
+
+```R
+fit=flexZBoost(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
+            nIMax = 30)
+fit$bestAlpha
+```
