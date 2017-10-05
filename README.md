@@ -89,10 +89,12 @@ FlexZBoost is a particular realization of FlexCode, where we use XGBoost  for th
 in FlexZBoost: an exponent $\alpha$ that we use to sharpen the computed density estimates $\widehat{f}(z|x)$, according to $\widetilde{f}(z|x) \propto \widehat{f}(z|x)^\alpha$.
 
 
-A simple example using the data generated above:
+A simple example of fitting flexZBoost using the data generated above:
 
 ```R
 fit=flexZBoost(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
             nIMax = 30)
 fit$bestAlpha
+fit$estimatedRisk
+plot(fit,xTest,zTest)
 ```
