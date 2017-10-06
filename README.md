@@ -126,7 +126,7 @@ data.photo.cov=data.photo %>% mutate(ug = u-g, gr = g-r, ri = r-i, iz = i-z, zy 
                                      zy.err = sqrt(z.err^2+y.err^2))
 data.photo.redshift=read.table("data/buzzard_truth.txt",header=T)[,1]
 
-# determine sample sizes for training:
+# determine sample size for training and for validation:
 n=nrow(data.spec.cov)
 nTrain=round(0.8*n)
 # split data
