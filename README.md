@@ -98,3 +98,51 @@ fit$bestAlpha
 fit$estimatedRisk
 plot(fit,xTest,zTest)
 ```
+
+## An example to Buzzard data
+
+
+```R
+library(dplyr)
+data.spec=read.table("buzzard_spec_witherrors_mass.txt",header=T)
+
+data.spec.redshift=data.spec$redshift
+# computes additional covariates:
+data.spec.cov=data.spec %>% mutate(ug = u-g, gr = g-r, ri = r-i, iz = i-z, zy = z-y,
+                                   ug.err = sqrt(u.err^2+g.err^2),
+                                   gr.err = sqrt(g.err^2+r.err^2),
+                                   ri.err = sqrt(r.err^2+i.err^2),
+                                   iz.err = sqrt(i.err^2+z.err^2),
+                                   zy.err = sqrt(z.err^2+y.err^2))
+data.spec.cov=data.spec.cov %>% select(-redshift)
+
+data.photo=read.table("buzzard_phot_witherrors_mass.txt",header=T)
+# computes additional covariates:
+data.photo.cov=data.photo %>% mutate(ug = u-g, gr = g-r, ri = r-i, iz = i-z, zy = z-y,
+                                     ug.err = sqrt(u.err^2+g.err^2),
+                                     gr.err = sqrt(g.err^2+r.err^2),
+                                     ri.err = sqrt(r.err^2+i.err^2),
+                                     iz.err = sqrt(i.err^2+z.err^2),
+                                     zy.err = sqrt(z.err^2+y.err^2))
+data.photo.redshift=read.table("data/buzzard_truth.txt",header=T)[,1]
+
+# determine sample sizes for training:
+n=nrow(data.spec.cov)
+nTrain=round(0.8*n)
+# split data
+randomIndex=sample(1:n)
+xTrain=data.spec.cov[randomIndex[1:nTrain],]
+xValidation=data.spec.cov[-randomIndex[1:nTrain],]
+zTrain=data.spec.redshift[randomIndex[1:nTrain]]
+zValidation=data.spec.redshift[-randomIndex[1:nTrain]]
+
+fit=flexZBoost(xTrain=xTrain,zTrain=zTrain,
+               xValidation=xValidation,zValidation=zValidation,
+               xTest = data.photo.cov,
+               zTest= data.photo.redshift,
+               nIMax = 40,regressionFunction.extra = list(nCores=5,
+                                                                 ninter=2000))
+fit$estimatedRisk
+plot(fit,data.photo.cov,
+     data.photo.redshift)
+```
