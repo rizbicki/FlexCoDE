@@ -7,6 +7,7 @@
 #' @param xTest Covariates x used to estimate risk of final model (one observation per row; same number of columns as xTrain). Default is NULL
 #' @param zTest Responses z used to estimate risk of final model  (matrix with one column; one observation per row). Default is NULL
 #' @param nIMax Maximum possible number of components of the series expansion (that is, the function will find the best I<nIMax). Default is 100
+#' @param n_grid Number of grid points to evaluate estimated densities. Default is 1000
 #' @param regressionFunction a function indicating which regression method will be used
 #' to estimate the expansion coefficients.
 #' Currently can be one of regressionFunction.NN, regressionFunction.NW,
@@ -51,7 +52,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
                      system="Fourier",
                      deltaGrid=seq(0,0.45,length.out = 15),chooseDelta=TRUE,
                      sharpenGrid=seq(0.01,10,length.out = 20),chooseSharpen=FALSE,
-                     zMin=NULL,zMax=NULL,verbose=FALSE)
+                     zMin=NULL,zMax=NULL,n_grid=1000,verbose=FALSE)
 {
   if(!is.matrix(xTrain))
     xTrain=as.matrix(xTrain)
@@ -123,6 +124,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   objectCDE$bestI <- max(which(levels <= best_level))
   objectCDE$bestError <- min(objectCDE$errors)
 
+  objectCDE$n_grid=n_grid
   if (chooseDelta) {
     if (verbose) {
       print("Choosing optimal cutoff Delta")
@@ -130,7 +132,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 
     objectCDE$bestDelta <- chooseDelta(objectCDE, xValidation,
                                        objectCDE$zMin + (objectCDE$zMax - objectCDE$zMin) * zValidation,
-                                       deltaGrid)
+                                       deltaGrid,n_grid=n_grid)
   } else {
     objectCDE$bestDelta <- 0.0
   }
@@ -142,7 +144,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 
     objectCDE$bestAlpha <- chooseSharpen(objectCDE, xValidation,
                                          objectCDE$zMin + (objectCDE$zMax - objectCDE$zMin) * zValidation,
-                                         sharpenGrid)
+                                         sharpenGrid,n_grid=n_grid)
   } else {
     objectCDE$bestAlpha <- 1.0
   }
@@ -151,7 +153,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   if(!is.null(xTest)&!is.null(zTest))
   {
     if(verbose) print("Estimating risk on test set")
-    error <- estimateError(objectCDE, xTest, zTest, se = TRUE)
+    error <- estimateError(objectCDE, xTest, zTest, se = TRUE,n_grid=n_grid)
     objectCDE$estimatedRisk=error
   }
 
@@ -214,12 +216,12 @@ flexZBoost=function(xTrain,zTrain,xValidation,zValidation,
 #'   argument
 #'
 #' @return Value of delta for bump removal which minimizes CDE loss
-chooseDelta <- function(objectCDE, X, Z, delta_grid = seq(0.0, 0.4, 0.05)) {
+chooseDelta <- function(objectCDE, X, Z, delta_grid = seq(0.0, 0.4, 0.05),n_grid=n_grid) {
   if (!is.matrix(X)) {
     X <- as.matrix(X)
   }
 
-  preds <- predict(objectCDE, X, process = FALSE)
+  preds <- predict(objectCDE, X, process = FALSE,B=n_grid)
 
   preds$CDE <- preds$CDE * (objectCDE$zMax - objectCDE$zMin)
 
@@ -257,12 +259,12 @@ chooseDelta <- function(objectCDE, X, Z, delta_grid = seq(0.0, 0.4, 0.05)) {
 #' @param alpha_grid Grid of values of alpha
 #'
 #' @return Value of alpha which minimizes CDE loss
-chooseSharpen <- function(objectCDE, X, Z, alpha_grid=seq(0.01,10,length.out = 20)) {
+chooseSharpen <- function(objectCDE, X, Z, alpha_grid=seq(0.01,10,length.out = 20),n_grid=n_grid) {
   if (!is.matrix(X)) {
     X <- as.matrix(X)
   }
 
-  preds <- predict(objectCDE, X, process = TRUE)
+  preds <- predict(objectCDE, X, process = TRUE,B=n_grid)
   bin_size <- diff(preds$z)[1]
 
 
@@ -324,7 +326,7 @@ estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500,
   x_test <- as.matrix(x_test)
   z_test <- as.matrix(z_test)
 
-  pred_obj <- predict(obj, x_test, n_grid)
+  pred_obj <- predict(obj, x_test, B=n_grid)
   cde_test <- pred_obj$CDE
   z_grid <- pred_obj$z
 
@@ -364,11 +366,12 @@ estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500,
 #'
 #' @export
 #'
-predict.FlexCoDE <- function(obj, xNew, B = 1000, predictionBandProb = FALSE, process = TRUE) {
+predict.FlexCoDE <- function(obj, xNew, B = NULL, predictionBandProb = FALSE, process = TRUE) {
   if (!is.matrix(xNew)) {
     xNew <- as.matrix(xNew)
   }
-
+  if(is.null(B))
+    B=obj$n_grid
   z_grid <- seq(0.0, 1.0, length.out = B)
 
   if (!is.null(obj$bestI)) {
@@ -484,7 +487,7 @@ plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),9),fontSize=
   if(class(objectCDE)!="FlexCoDE")
     stop("objectCDE needs to be of class FlexCoDE")
   if(objectCDE$verbose)  print("Calculating predicted values")
-  predictedValues=predict(objectCDE,xTest,B=500,predictionBandProb=predictionBandProb)
+  predictedValues=predict(objectCDE,xTest,B=objectCDE$n_grid,predictionBandProb=predictionBandProb)
 
 
   randomOrder=sample(1:nrow(xTest),nPlots,replace=FALSE)
