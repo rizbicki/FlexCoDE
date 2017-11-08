@@ -101,6 +101,7 @@ plot(fit,xTest,zTest)
 
 ## An example to Buzzard data
 
+If you are a member of the LSST DESC, you will find information about and pointers to Data Challenge 1 (DC1) data at [https://confluence.slac.stanford.edu/pages/viewpage.action?spaceKey=LSSTDESC&title=DC1+resources](https://confluence.slac.stanford.edu/pages/viewpage.action?spaceKey=LSSTDESC&title=DC1+resources)
 
 ```R
 library(dplyr)
