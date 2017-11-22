@@ -223,8 +223,6 @@ chooseDelta <- function(objectCDE, X, Z, delta_grid = seq(0.0, 0.4, 0.05),n_grid
 
   preds <- predict(objectCDE, X, process = FALSE,B=n_grid)
 
-  preds$CDE <- preds$CDE * (objectCDE$zMax - objectCDE$zMin)
-
   bin_size <- diff(preds$z)[1]
   estimates <- t(apply(preds$CDE, 1, function(xx) {
     return(normalize_density(bin_size, xx))
