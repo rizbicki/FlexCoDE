@@ -1,3 +1,7 @@
+box_transform <- function(z, z_min, z_max) {
+  return((z - z_min) / (z_max - z_min))
+}
+
 #' Calculate basis functions for new observations
 #'
 #' @param z elements where basis is going to be calculated. Assumes z
