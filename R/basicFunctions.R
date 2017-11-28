@@ -104,9 +104,8 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   rm(regressionObject,xTrain,zTrain,responseFourier)
   gc(verbose = FALSE)
 
-  zValidation=(zValidation-objectCDE$zMin)/(objectCDE$zMax-objectCDE$zMin)
-
-  basisZValidation=calculateBasis(zValidation,objectCDE$nIMax,objectCDE$system) # returns matrix length(z)xnIMax with the basis for z
+  basisZValidation=calculateBasis(box_transform(zValidation, zMin, zMax),
+                                  objectCDE$nIMax,objectCDE$system) # returns matrix length(z)xnIMax with the basis for z
 
   if(verbose) print("Tuning Number of Expansion Coefficients (I)")
   coefficientsXValidation=predict(objectCDE$regressionObject,xValidation)
@@ -130,9 +129,8 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
       print("Choosing optimal cutoff Delta")
     }
 
-    objectCDE$bestDelta <- chooseDelta(objectCDE, xValidation,
-                                       objectCDE$zMin + (objectCDE$zMax - objectCDE$zMin) * zValidation,
-                                       deltaGrid,n_grid=n_grid)
+    objectCDE$bestDelta <- chooseDelta(objectCDE, xValidation, zValidation,
+                                       deltaGrid, n_grid = n_grid)
   } else {
     objectCDE$bestDelta <- 0.0
   }
@@ -142,9 +140,8 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
       print("Choosing optimal sharpen parameter alpha")
     }
 
-    objectCDE$bestAlpha <- chooseSharpen(objectCDE, xValidation,
-                                         objectCDE$zMin + (objectCDE$zMax - objectCDE$zMin) * zValidation,
-                                         sharpenGrid,n_grid=n_grid)
+    objectCDE$bestAlpha <- chooseSharpen(objectCDE, xValidation, zValidation
+                                         sharpenGrid, n_grid = n_grid)
   } else {
     objectCDE$bestAlpha <- 1.0
   }
@@ -222,8 +219,6 @@ chooseDelta <- function(objectCDE, X, Z, delta_grid = seq(0.0, 0.4, 0.05),n_grid
   }
 
   preds <- predict(objectCDE, X, process = FALSE,B=n_grid)
-
-  preds$CDE <- preds$CDE * (objectCDE$zMax - objectCDE$zMin)
 
   bin_size <- diff(preds$z)[1]
   estimates <- t(apply(preds$CDE, 1, function(xx) {
