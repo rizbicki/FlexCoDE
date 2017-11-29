@@ -149,7 +149,7 @@ normalize_density <- function(bin_size, estimates,
 
   area <- bin_size * sum(pmax(estimates, 0.0))
   if (area < 1) {
-    return(pmax(estimates / area, 0.0))
+    return(pmax(estimates, 0.0) / area)
   }
 
   upper <- max(estimates)
