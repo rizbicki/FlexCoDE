@@ -82,9 +82,18 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 
 
   objectCDE=NULL
-  objectCDE$zMax=ifelse(is.null(zMax),max(zTrain),zMax)
-  objectCDE$zMin=ifelse(is.null(zMin),min(zTrain),zMin)
-  zTrain=(zTrain-objectCDE$zMin)/(objectCDE$zMax-objectCDE$zMin)
+
+  if (is.null(zMin)) {
+    zMin <- min(zTrain)
+  }
+  objectCDE$zMin <- zMin
+
+  if (is.null(zMax)) {
+    zMax <- max(zTrain)
+  }
+  objectCDE$zMax <- zMax
+
+  zTrain <- box_transform(zTrain, zMin, zMax)
 
   class(objectCDE)="FlexCoDE"
   objectCDE$verbose=verbose
@@ -112,7 +121,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 
   # Find level of expansion which minimizes the loss
   term1 <- 1/2*colMeans(coefficientsXValidation^2)
-  term2 <- colMeans(coefficientsXValidation*basisZValidation[,1:ncol(coefficientsXValidation),drop=F])
+  term2 <- colMeans(coefficientsXValidation * basisZValidation[, 1:ncol(coefficientsXValidation), drop = FALSE])
 
   levels <- attr(basisZValidation, "levels")
   uniq_levels <- unique(levels)
