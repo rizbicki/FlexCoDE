@@ -140,7 +140,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
       print("Choosing optimal sharpen parameter alpha")
     }
 
-    objectCDE$bestAlpha <- chooseSharpen(objectCDE, xValidation, zValidation
+    objectCDE$bestAlpha <- chooseSharpen(objectCDE, xValidation, zValidation,
                                          sharpenGrid, n_grid = n_grid)
   } else {
     objectCDE$bestAlpha <- 1.0
