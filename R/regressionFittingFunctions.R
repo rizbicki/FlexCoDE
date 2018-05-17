@@ -429,13 +429,14 @@ regressionFunction.Lasso=function(x,responses,extra=NULL)
 {
   # Both x and responses are matrices
 
-  coeffs=apply(responses,2,function(yy){
+  coeffs=apply(responses[,-1],2,function(yy){
     lasso.mod = glmnet::glmnet(x,yy, alpha =1)
     cv.out = glmnet::cv.glmnet(x, yy, alpha =1)
     bestlam = cv.out$lambda.min
     coeff = coefficients(lasso.mod , s = bestlam)
     return(as.numeric(coeff))
   })
+  coeffs <- cbind(c(1,ncol(x)),coeffs)
 
   regressionObject=NULL
   regressionObject$coefficients=coeffs
