@@ -137,7 +137,7 @@ xValidation=data.spec.cov[-randomIndex[1:nTrain],]
 zTrain=data.spec.redshift[randomIndex[1:nTrain]]
 zValidation=data.spec.redshift[-randomIndex[1:nTrain]]
 
-fit=flexZBoost(xTrain=xTrain,zTrain=zTrain,
+fit=FlexZBoost(xTrain=xTrain,zTrain=zTrain,
                xValidation=xValidation,zValidation=zValidation,
                xTest = data.photo.cov,
                zTest= data.photo.redshift,
