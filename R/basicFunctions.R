@@ -170,9 +170,9 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
   return(objectCDE)
 }
 
-#' Fits flexZBoost
+#' Fits FlexZBoost
 #'
-#' Wrapper for fitFlexCoDE for the special case of flexZBoost
+#' Wrapper for fitFlexCoDE for the special case of FlexZBoost
 #'
 #' @param xTrain Covariates x used to train the model (one observation per row)
 #' @param zTrain Responses z used to train the model  (matrix with one column; one observation per row)
@@ -199,7 +199,7 @@ fitFlexCoDE=function(xTrain,zTrain,xValidation,zValidation,xTest=NULL,zTest=NULL
 #'
 #'
 #' @export
-flexZBoost=function(xTrain,zTrain,xValidation,zValidation,
+FlexZBoost=function(xTrain,zTrain,xValidation,zValidation,
                     xTest=NULL,zTest=NULL,chooseSharpen=TRUE,...)
 {
   return(fitFlexCoDE(xTrain=xTrain,zTrain=zTrain,xValidation=xValidation,
