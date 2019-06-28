@@ -21,4 +21,3 @@ Estimated error (with SE if desired)
 \description{
 Estimate error (risk) of FlexCoDE object via test set
 }
-

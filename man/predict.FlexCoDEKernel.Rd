@@ -27,4 +27,3 @@ Evaluates the estimated  density of new observations (testing points) of a "Flex
 # See \\code{\\link{fitFlexCoDE}}
 
 }
-

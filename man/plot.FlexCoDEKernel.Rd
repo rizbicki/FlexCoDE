@@ -5,8 +5,8 @@
 \title{Plots examples of estimated densities together with real response}
 \usage{
 plot.FlexCoDEKernel(objectCDE, kernelTestTrain, zTest,
-  nPlots = min(nrow(kernelTestTrain), 9), fontSize = 12, lineWidth = 1,
-  predictionBandProb = FALSE, lineWidthPred = 0.6)
+  nPlots = min(nrow(kernelTestTrain), 9), fontSize = 12,
+  lineWidth = 1, predictionBandProb = FALSE, lineWidthPred = 0.6)
 }
 \arguments{
 \item{objectCDE}{Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand}
@@ -35,4 +35,3 @@ Plots examples of estimated densities together with real response
 # See \\code{\\link{fitFlexCoDE}}
 
 }
-

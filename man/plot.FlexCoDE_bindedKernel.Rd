@@ -5,7 +5,8 @@
 \title{Plots examples of estimated densities together with real response}
 \usage{
 plot.FlexCoDE_bindedKernel(objectCDE_binded, kernelTestTrain, zTest,
-  nPlots = min(nrow(kernelTestTrain), 8), fontSize = 12, lineWidth = 1)
+  nPlots = min(nrow(kernelTestTrain), 8), fontSize = 12,
+  lineWidth = 1)
 }
 \arguments{
 \item{objectCDE_binded}{Object of the class "FlexCoDE_binded", typically obtained using \code{\link{bindFlexCoDE}} beforehand}
@@ -30,4 +31,3 @@ Plots examples of estimated densities together with real response
 # See \\code{\\link{bindFlexCoDEKernel}}
 
 }
-

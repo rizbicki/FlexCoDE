@@ -19,4 +19,3 @@ object of the class Lasso containing information needed to perform prediction on
 \description{
 This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 }
-

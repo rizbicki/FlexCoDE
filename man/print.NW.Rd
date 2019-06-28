@@ -20,4 +20,3 @@ prints characteristics of the regressions that were fitted
 This function is typically not directly used by the user; it is used inside  \code{\link{print.FlexCoDE}}, the print
 method for the class FlexCoDE
 }
-

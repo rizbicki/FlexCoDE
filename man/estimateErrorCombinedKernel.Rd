@@ -4,7 +4,8 @@
 \alias{estimateErrorCombinedKernel}
 \title{Estimate error (risk) of combinedFlexCoDE object via test set}
 \usage{
-estimateErrorCombinedKernel(objectCombined, kernelTestTrain, zTest, se = TRUE)
+estimateErrorCombinedKernel(objectCombined, kernelTestTrain, zTest,
+  se = TRUE)
 }
 \arguments{
 \item{objectCombined}{Object of the class "combinedFlexCoDE", typically fitted used \code{\link{combineFlexCoDE}} beforehand}
@@ -21,4 +22,3 @@ Estimated error (with SE if desired)
 \description{
 Estimate error (risk) of combinedFlexCoDE object via test set
 }
-

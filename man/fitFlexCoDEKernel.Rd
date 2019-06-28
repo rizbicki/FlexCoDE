@@ -4,10 +4,11 @@
 \alias{fitFlexCoDEKernel}
 \title{FlexCoDE Fit Conditional Density Estimation via Regression}
 \usage{
-fitFlexCoDEKernel(kernelTrainTrain, zTrain, kernelValidationTrain, zValidation,
-  kernelTestTrain = NULL, zTest = NULL, nIMax = min(25, length(zTrain)),
-  regressionFunction, regressionFunction.extra = NULL, system = "Fourier",
-  deltaGrid = seq(0, 0.4, 0.05), chooseDelta = TRUE, verbose = TRUE)
+fitFlexCoDEKernel(kernelTrainTrain, zTrain, kernelValidationTrain,
+  zValidation, kernelTestTrain = NULL, zTest = NULL, nIMax = min(25,
+  length(zTrain)), regressionFunction, regressionFunction.extra = NULL,
+  system = "Fourier", deltaGrid = seq(0, 0.4, 0.05),
+  chooseDelta = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{zTrain}{Responses z used to train the model  (matrix with one column; one observation per row)}
@@ -53,109 +54,3 @@ Returns the fitted estimated conditional density, and object of the class FlexCo
 \description{
 FlexCoDE Fit Conditional Density Estimation via Regression
 }
-\examples{
-set.seed(400)
-
-# generate data
-n=1000
-d=10
-data=matrix(NA,n,d+1)
-data[,1:d]=matrix(rnorm(n*d),n,d)
-data[,d+1]=data[,1]+rnorm(n,0,0.1)
-
-# determine sample sizes
-nTrain=round(0.7*n)
-nValidation=round(0.25*n)
-nTest=n-nTrain-nValidation
-
-# compute kernel
-distanceMatrix=fields::rdist(data[,1:d],data[,1:d])
-
-# split data
-randomIndex=sample(1:n)
-zTrain=data[randomIndex[1:nTrain],d+1]
-zValidation=data[randomIndex[(nTrain+1):(nTrain+nValidation)],d+1]
-zTest=data[randomIndex[(nTrain+nValidation+1):n],d+1]
-
-
-############################################################
-###### fit NN estimator (not appropriate for sparse structure)
-############################################################
-kernelTrainTrain=-distanceMatrix[randomIndex[1:nTrain],randomIndex[1:nTrain]]^2
-kernelValidationTrain=-distanceMatrix[randomIndex[(nTrain+1):(nTrain+nValidation)],randomIndex[1:nTrain]]^2
-fit=fitFlexCoDEKernel(kernelTrainTrain,zTrain,kernelValidationTrain,zValidation,
-                      nIMax = 20,regressionFunction = regressionFunction.NNKernel,chooseDelta = FALSE)
-kernelTestTrain=-distanceMatrix[randomIndex[(nTrain+nValidation+1):n],randomIndex[1:nTrain]]^2
-fit1=fitFlexCoDEKernel(kernelTrainTrain,zTrain,kernelValidationTrain,zValidation,kernelTestTrain,zTest,
-                      nIMax = 20,regressionFunction = regressionFunction.NNKernel)
-fit1$estimatedRisk
-
-
-# Plot estimator
-plot(fit,kernelTestTrain,zTest)
-
-
-
-
-############################################################
-######## Series
-############################################################
-epsGrid=seq(0.1,10,length.out = 5)
-error=rep(NA,length(epsGrid))
-for(i in 1:length(epsGrid))
-{
-  print(i/length(epsGrid))
-  kernelTrainTrain=exp(-(distanceMatrix[randomIndex[1:nTrain],randomIndex[1:nTrain]]^2/(4*epsGrid[i])))
-  kernelValidationTrain=exp(-(distanceMatrix[randomIndex[(nTrain+1):(nTrain+nValidation)],randomIndex[1:nTrain]]^2/(4*epsGrid[i])))
-
-
-  fit=fitFlexCoDEKernel(kernelTrainTrain,zTrain,kernelValidationTrain,zValidation,
-                        nIMax = 20,regressionFunction = regressionFunction.SeriesKernel,chooseDelta = FALSE)
-  error[i]=fit$bestError
-}
-plot(error)
-
-bestEps=epsGrid[which.min(error)]
-
-kernelTrainTrain=exp(-(distanceMatrix[randomIndex[1:nTrain],randomIndex[1:nTrain]]^2/(4*bestEps)))
-kernelValidationTrain=exp(-(distanceMatrix[randomIndex[(nTrain+1):(nTrain+nValidation)],randomIndex[1:nTrain]]^2/(4*bestEps)))
-kernelTestTrain=exp(-(distanceMatrix[randomIndex[(nTrain+nValidation+1):n],randomIndex[1:nTrain]]^2/(4*bestEps)))
-
-
-fit2=fitFlexCoDEKernel(kernelTrainTrain,zTrain,kernelValidationTrain,zValidation,kernelTestTrain,zTest,
-                      nIMax = 20,regressionFunction = regressionFunction.SeriesKernel)
-fit2$estimatedRisk
-
-
-
-############################################################
-######## SDM
-############################################################
-epsGrid=seq(0.1,5,length.out = 5)
-error=rep(NA,length(epsGrid))
-for(i in 1:length(epsGrid))
-{
-  print(i/length(epsGrid))
-  kernelTrainTrain=exp(-(distanceMatrix[randomIndex[1:nTrain],randomIndex[1:nTrain]]^2/(4*epsGrid[i])))
-  kernelValidationTrain=exp(-(distanceMatrix[randomIndex[(nTrain+1):(nTrain+nValidation)],randomIndex[1:nTrain]]^2/(4*epsGrid[i])))
-
-
-  fit=fitFlexCoDEKernel(kernelTrainTrain,zTrain,kernelValidationTrain,zValidation,
-                        nIMax = 20,regressionFunction = regressionFunction.SDMKernel,
-                        regressionFunction.extra = list(C=5,eps=0.01),chooseDelta = FALSE)
-  error[i]=fit$bestError
-}
-plot(error)
-
-bestEps=epsGrid[which.min(error)]
-
-kernelTrainTrain=exp(-(distanceMatrix[randomIndex[1:nTrain],randomIndex[1:nTrain]]^2/(4*bestEps)))
-kernelValidationTrain=exp(-(distanceMatrix[randomIndex[(nTrain+1):(nTrain+nValidation)],randomIndex[1:nTrain]]^2/(4*bestEps)))
-kernelTestTrain=exp(-(distanceMatrix[randomIndex[(nTrain+nValidation+1):n],randomIndex[1:nTrain]]^2/(4*bestEps)))
-
-
-fit2=fitFlexCoDEKernel(kernelTrainTrain,zTrain,kernelValidationTrain,zValidation,kernelTestTrain,zTest,
-                       nIMax = 20,regressionFunction = regressionFunction.SDMKernel,regressionFunction.extra = list(C=5,eps=0.01))
-fit2$estimatedRisk
-}
-

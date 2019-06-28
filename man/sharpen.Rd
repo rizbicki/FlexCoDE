@@ -19,4 +19,3 @@ A vector of the sharp density
 \description{
 Sharpen estimated of a conditional density estimator
 }
-

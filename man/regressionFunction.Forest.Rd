@@ -20,4 +20,3 @@ object of the class Forest containing information needed to perform prediction o
 \description{
 This function is typically not directly used by the user; it is used inside  \code{\link{fitFlexCoDE}}
 }
-

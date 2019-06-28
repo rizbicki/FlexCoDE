@@ -15,4 +15,3 @@ returns information regarding the fitted model
 \description{
 Print object of classe FlexCoDE
 }
-

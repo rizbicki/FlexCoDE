@@ -4,7 +4,8 @@
 \alias{chooseSharpen}
 \title{Choose sharpen parameter of a conditional density estimator}
 \usage{
-chooseSharpen(objectCDE, X, Z, alpha_grid = seq(0.01, 10, length.out = 20))
+chooseSharpen(objectCDE, X, Z, alpha_grid = seq(0.01, 10, length.out =
+  20), n_grid = n_grid)
 }
 \arguments{
 \item{objectCDE}{An object of the class FlexCoDE with a fitted CDE,
@@ -26,4 +27,3 @@ Value of alpha which minimizes CDE loss
 Chooses optimal alpha for the new conditional density
 estimator f(z|x) <- f^alpha(z|x).
 }
-

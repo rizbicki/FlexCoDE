@@ -24,4 +24,3 @@ Evaluates the estimated  density of new observations (testing points) of a "comb
 \examples{
 # See \\code{\\link{combineFlexCoDE}}
 }
-
