@@ -639,7 +639,7 @@ regressionFunction.XGBoost=function(x,responses,extra=NULL)
     bst <- xgboost::xgboost(names(x),data =x,label=responses[,ii,drop=FALSE],
                               nthread = 1,
                             nround = ninter,
-                            objective="reg:linear",
+                            objective="reg:squarederror",
                             verbose=FALSE)
 
     object=NULL
