@@ -674,10 +674,10 @@ print.XGBoost=function(regressionObject,bestI,nameCovariates)
 
   if(length(regressionObject$fittedReg[[1]]$importance$Gain)==1)
   {
-    importance=t(sapply(regressionObject$fittedReg,function(x)x$importance)[1:(bestI-1)])
+    importance=t(sapply(regressionObject$fittedReg,function(x)x$importance$Gain)[1:(bestI-1)])
 
   } else {
-    importance=sapply(regressionObject$fittedReg,function(x)x$importance$Gain)[,1:(bestI-1)]
+    importance=sapply(regressionObject$fittedReg,function(x)x$importance$Gain)[,1:(bestI-1),drop=FALSE]
   }
   freq=rowMeans(importance)
   if(!is.null(regressionObject$names.covariates))

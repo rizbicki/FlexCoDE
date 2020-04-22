@@ -216,9 +216,9 @@ predict.XGBoost=function(object,xNew,maxTerms=NULL)
   {
     if(maxTerms==1)
       return(matrix(1,nrow(xNew),1))
-    maxTerms=min(maxTerms,length(object)+1)
+    maxTerms=min(maxTerms,length(object$fittedReg)+1)
   } else {
-    maxTerms=length(object)+1
+    maxTerms=length(object$fittedReg)+1
   }
 
   predictedValidation=apply(as.matrix(2:maxTerms),1,function(xx)
