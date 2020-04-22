@@ -227,6 +227,9 @@ predict.XGBoost=function(object,xNew,maxTerms=NULL)
     return(predicted)
   })
 
+  if(is.vector(predictedValidation))
+    return(c(1,predictedValidation))
+
   return(cbind(1,predictedValidation))
 }
 
