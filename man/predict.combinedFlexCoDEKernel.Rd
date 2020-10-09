@@ -4,7 +4,7 @@
 \alias{predict.combinedFlexCoDEKernel}
 \title{Evaluates the estimated  density of new observations (testing points) of a "combinedFlexCoDE" object}
 \usage{
-predict.combinedFlexCoDEKernel(objectCombined, kernelNewTrain, B = 1000)
+\method{predict}{combinedFlexCoDEKernel}(objectCombined, kernelNewTrain, B = 1000)
 }
 \arguments{
 \item{B}{Number of point where f(z|x) will be evaluated (on the z scale). This will be equally spaced between zMin and zMax}
@@ -22,5 +22,5 @@ The return value is an object with the following components
 Evaluates the estimated  density of new observations (testing points) of a "combinedFlexCoDE" object
 }
 \examples{
-# See \\code{\\link{combineFlexCoDE}}
+# See \code{\link{combineFlexCoDE}}
 }

@@ -4,8 +4,7 @@
 \alias{chooseDelta}
 \title{Choose threshold value to remove spurius bumps}
 \usage{
-chooseDelta(objectCDE, X, Z, delta_grid = seq(0, 0.4, 0.05),
-  n_grid = n_grid)
+chooseDelta(objectCDE, X, Z, delta_grid = seq(0, 0.4, 0.05), n_grid = n_grid)
 }
 \arguments{
 \item{objectCDE}{An object of the class FlexCoDE with a fitted CDE,

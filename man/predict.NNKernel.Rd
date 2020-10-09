@@ -4,7 +4,7 @@
 \alias{predict.NNKernel}
 \title{Predict NN regression}
 \usage{
-predict.NNKernel(object, kernelNewTrain, maxTerms = NULL)
+\method{predict}{NNKernel}(object, kernelNewTrain, maxTerms = NULL)
 }
 \arguments{
 \item{object}{object of the class NN}

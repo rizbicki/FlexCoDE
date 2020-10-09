@@ -4,8 +4,7 @@
 \alias{post_process}
 \title{Post process density estimate to normalize and remove bumps}
 \usage{
-post_process(binSize, estimates, delta = 0, threshold = 1e-06,
-  alpha = 1)
+post_process(binSize, estimates, delta = 0, threshold = 1e-06, alpha = 1)
 }
 \arguments{
 \item{binSize}{size of grid bins}

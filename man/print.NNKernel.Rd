@@ -14,12 +14,6 @@
 \item{bestI}{optimal number of expansion coefficients}
 
 \item{nameCovariates}{name of the covariates}
-
-\item{regressionObject}{of the class NN}
-
-\item{bestI}{optimal number of expansion coefficients}
-
-\item{nameCovariates}{name of the covariates}
 }
 \value{
 prints characteristics of the regressions that were fitted

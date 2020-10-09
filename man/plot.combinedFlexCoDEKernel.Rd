@@ -4,9 +4,14 @@
 \alias{plot.combinedFlexCoDEKernel}
 \title{Plots examples of estimated densities together with real response}
 \usage{
-plot.combinedFlexCoDEKernel(objectCombined, kernelTestTrain, zTest,
-  nPlots = min(nrow(kernelTestTrain), 8), fontSize = 12,
-  lineWidth = 1)
+\method{plot}{combinedFlexCoDEKernel}(
+  objectCombined,
+  kernelTestTrain,
+  zTest,
+  nPlots = min(nrow(kernelTestTrain), 8),
+  fontSize = 12,
+  lineWidth = 1
+)
 }
 \arguments{
 \item{objectCombined}{Object of the class "combinedFlexCoDE", typically fitted used \code{\link{combineFlexCoDE}} beforehand}
@@ -28,5 +33,5 @@ Plot with estimated densities
 Plots examples of estimated densities together with real response
 }
 \examples{
-# See \\code{\\link{combineFlexCoDE}}
+# See \code{\link{combineFlexCoDE}}
 }

@@ -5,8 +5,7 @@
 \title{Project onto density estimates
 Uses binary search to determine the correct cutoff}
 \usage{
-normalize_density(bin_size, estimates, tolerance = 0.001,
-  max_iters = 500)
+normalize_density(bin_size, estimates, tolerance = 0.001, max_iters = 500)
 }
 \description{
 Project onto density estimates

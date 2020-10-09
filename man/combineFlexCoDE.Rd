@@ -4,8 +4,13 @@
 \alias{combineFlexCoDE}
 \title{Finds best linear combination of several FlexCoDE estimates}
 \usage{
-combineFlexCoDE(objectCDE_binded, xValidation, zValidation, xTest = NULL,
-  zTest = NULL)
+combineFlexCoDE(
+  objectCDE_binded,
+  xValidation,
+  zValidation,
+  xTest = NULL,
+  zTest = NULL
+)
 }
 \arguments{
 \item{objectCDE_binded}{An object of the class FlexCoDE_binded with a fitted CDE, typically fitted used \code{\link{bindFlexCoDE}} beforehand}

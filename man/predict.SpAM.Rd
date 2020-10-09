@@ -4,7 +4,7 @@
 \alias{predict.SpAM}
 \title{Predict SpAM regression}
 \usage{
-predict.SpAM(object, xNew, maxTerms = NULL)
+\method{predict}{SpAM}(object, xNew, maxTerms = NULL)
 }
 \arguments{
 \item{object}{object of the class SpAM}

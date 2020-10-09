@@ -4,8 +4,12 @@
 \alias{chooseDeltaKernel}
 \title{Choose threshold value to remove spurius bumps}
 \usage{
-chooseDeltaKernel(objectCDE, kernelValidationTrain, zValidation,
-  deltaGrid = seq(0, 0.4, 0.05))
+chooseDeltaKernel(
+  objectCDE,
+  kernelValidationTrain,
+  zValidation,
+  deltaGrid = seq(0, 0.4, 0.05)
+)
 }
 \arguments{
 \item{objectCDE}{An object of the class FlexCoDE with a fitted CDE, typically fitted used \code{\link{fitFlexCoDE}} beforehand}

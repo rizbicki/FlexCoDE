@@ -4,7 +4,7 @@
 \alias{predict.NW}
 \title{Predict NW regression}
 \usage{
-predict.NW(object, xNew, maxTerms = NULL)
+\method{predict}{NW}(object, xNew, maxTerms = NULL)
 }
 \arguments{
 \item{object}{object of the class NW}

@@ -4,8 +4,7 @@
 \alias{estimateError}
 \title{Estimate error (risk) of FlexCoDE object via test set}
 \usage{
-estimateError(obj, x_test, z_test, se = TRUE, n_boot = 500,
-  n_grid = 1000)
+estimateError(obj, x_test, z_test, se = TRUE, n_boot = 500, n_grid = 1000)
 }
 \arguments{
 \item{obj}{is an object of the class FlexCoDE typically fitted used

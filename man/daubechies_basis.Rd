@@ -4,8 +4,13 @@
 \alias{daubechies_basis}
 \title{Evaluates Daubechies basis for new observations}
 \usage{
-daubechies_basis(z, n_basis, n_aux_basis = max(n_basis, 2^12),
-  filter_number = 10, family = "DaubExPhase")
+daubechies_basis(
+  z,
+  n_basis,
+  n_aux_basis = max(n_basis, 2^12),
+  filter_number = 10,
+  family = "DaubExPhase"
+)
 }
 \arguments{
 \item{z}{elements where basis is going to be calculated. Assumes z

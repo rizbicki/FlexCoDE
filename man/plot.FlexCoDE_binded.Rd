@@ -4,8 +4,14 @@
 \alias{plot.FlexCoDE_binded}
 \title{Plots examples of estimated densities together with real response}
 \usage{
-plot.FlexCoDE_binded(objectCDE_binded, xTest, zTest,
-  nPlots = min(nrow(xTest), 9), fontSize = 12, lineWidth = 1)
+\method{plot}{FlexCoDE_binded}(
+  objectCDE_binded,
+  xTest,
+  zTest,
+  nPlots = min(nrow(xTest), 9),
+  fontSize = 12,
+  lineWidth = 1
+)
 }
 \arguments{
 \item{objectCDE_binded}{Object of the class "FlexCoDE_binded", typically obtained using \code{\link{bindFlexCoDE}} beforehand}
@@ -27,6 +33,6 @@ Plot with estimated densities
 Plots examples of estimated densities together with real response
 }
 \examples{
-# See \\code{\\link{bindFlexCoDE}}
+# See \code{\link{bindFlexCoDE}}
 
 }

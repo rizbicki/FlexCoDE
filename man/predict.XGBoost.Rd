@@ -4,7 +4,7 @@
 \alias{predict.XGBoost}
 \title{Predict XGBoost}
 \usage{
-predict.XGBoost(object, xNew, maxTerms = NULL)
+\method{predict}{XGBoost}(object, xNew, maxTerms = NULL)
 }
 \arguments{
 \item{object}{object of the class XGBoost}

@@ -4,11 +4,21 @@
 \alias{fitFlexCoDEKernel}
 \title{FlexCoDE Fit Conditional Density Estimation via Regression}
 \usage{
-fitFlexCoDEKernel(kernelTrainTrain, zTrain, kernelValidationTrain,
-  zValidation, kernelTestTrain = NULL, zTest = NULL, nIMax = min(25,
-  length(zTrain)), regressionFunction, regressionFunction.extra = NULL,
-  system = "Fourier", deltaGrid = seq(0, 0.4, 0.05),
-  chooseDelta = TRUE, verbose = TRUE)
+fitFlexCoDEKernel(
+  kernelTrainTrain,
+  zTrain,
+  kernelValidationTrain,
+  zValidation,
+  kernelTestTrain = NULL,
+  zTest = NULL,
+  nIMax = min(25, length(zTrain)),
+  regressionFunction,
+  regressionFunction.extra = NULL,
+  system = "Fourier",
+  deltaGrid = seq(0, 0.4, 0.05),
+  chooseDelta = TRUE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{zTrain}{Responses z used to train the model  (matrix with one column; one observation per row)}

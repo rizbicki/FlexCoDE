@@ -4,9 +4,16 @@
 \alias{plot.FlexCoDE}
 \title{Plots examples of estimated densities together with real response}
 \usage{
-plot.FlexCoDE(objectCDE, xTest, zTest, nPlots = min(nrow(xTest), 9),
-  fontSize = 12, lineWidth = 1, predictionBandProb = FALSE,
-  lineWidthPred = 0.6)
+\method{plot}{FlexCoDE}(
+  objectCDE,
+  xTest,
+  zTest,
+  nPlots = min(nrow(xTest), 9),
+  fontSize = 12,
+  lineWidth = 1,
+  predictionBandProb = FALSE,
+  lineWidthPred = 0.6
+)
 }
 \arguments{
 \item{objectCDE}{Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand}
@@ -23,7 +30,7 @@ plot.FlexCoDE(objectCDE, xTest, zTest, nPlots = min(nrow(xTest), 9),
 
 \item{predictionBandProb}{Either a number indicating the probability for the highest predictive density region desired  or FALSE if bands are not desired. Default is FALSE}
 
-\item{lineWidthPred}{Line width of the prediction bands to be ploted}
+\item{lineWidthPred}{Line width of the prediction bands to be plotted}
 }
 \value{
 Plot with estimated densities
@@ -32,6 +39,6 @@ Plot with estimated densities
 Plots examples of estimated densities together with real response
 }
 \examples{
-# See \\code{\\link{fitFlexCoDE}}
+# See \code{\link{fitFlexCoDE}}
 
 }

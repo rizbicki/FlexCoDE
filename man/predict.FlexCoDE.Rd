@@ -4,8 +4,7 @@
 \alias{predict.FlexCoDE}
 \title{Evaluates the estimated  density of new observations (testing points) of a "FlexCoDE" object}
 \usage{
-predict.FlexCoDE(obj, xNew, B = NULL, predictionBandProb = FALSE,
-  process = TRUE)
+\method{predict}{FlexCoDE}(obj, xNew, B = NULL, predictionBandProb = FALSE, process = TRUE)
 }
 \arguments{
 \item{xNew}{Matrix with nTest rows and same number of columns as xTrain, containing x's for which the estimates are desired.}

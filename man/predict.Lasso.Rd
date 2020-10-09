@@ -4,7 +4,7 @@
 \alias{predict.Lasso}
 \title{Predict Lasso regression}
 \usage{
-predict.Lasso(object, xNew, maxTerms = NULL)
+\method{predict}{Lasso}(object, xNew, maxTerms = NULL)
 }
 \arguments{
 \item{object}{object of the class Lasso}

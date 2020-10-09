@@ -4,7 +4,7 @@
 \alias{predict.SeriesKernel}
 \title{Predict Series regression}
 \usage{
-predict.SeriesKernel(object, kernelNewTrain, maxTerms = NULL)
+\method{predict}{SeriesKernel}(object, kernelNewTrain, maxTerms = NULL)
 }
 \arguments{
 \item{object}{object of the class Series}

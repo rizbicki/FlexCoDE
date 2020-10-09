@@ -4,12 +4,26 @@
 \alias{fitFlexCoDE}
 \title{FlexCoDE Fit Conditional Density Estimation via Regression}
 \usage{
-fitFlexCoDE(xTrain, zTrain, xValidation, zValidation, xTest = NULL,
-  zTest = NULL, nIMax = min(25, length(zTrain)), regressionFunction,
-  regressionFunction.extra = NULL, system = "Fourier",
-  deltaGrid = seq(0, 0.45, length.out = 15), chooseDelta = TRUE,
-  sharpenGrid = seq(0.01, 10, length.out = 20), chooseSharpen = FALSE,
-  zMin = NULL, zMax = NULL, n_grid = 1000, verbose = FALSE)
+fitFlexCoDE(
+  xTrain,
+  zTrain,
+  xValidation,
+  zValidation,
+  xTest = NULL,
+  zTest = NULL,
+  nIMax = min(25, length(zTrain)),
+  regressionFunction,
+  regressionFunction.extra = NULL,
+  system = "Fourier",
+  deltaGrid = seq(0, 0.45, length.out = 15),
+  chooseDelta = TRUE,
+  sharpenGrid = seq(0.01, 10, length.out = 20),
+  chooseSharpen = FALSE,
+  zMin = NULL,
+  zMax = NULL,
+  n_grid = 1000,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{xTrain}{Covariates x used to train the model (one observation per row)}

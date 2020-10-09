@@ -2,7 +2,7 @@
 % Please edit documentation in R/basicFunctions.R
 \name{print.FlexCoDE}
 \alias{print.FlexCoDE}
-\title{Print object of classe FlexCoDE}
+\title{Print object of class FlexCoDE}
 \usage{
 \method{print}{FlexCoDE}(objectCDE)
 }
@@ -13,5 +13,5 @@
 returns information regarding the fitted model
 }
 \description{
-Print object of classe FlexCoDE
+Print object of class FlexCoDE
 }

@@ -4,7 +4,7 @@
 \alias{predict.Forest}
 \title{Predict Forest regression}
 \usage{
-predict.Forest(object, xNew, maxTerms = NULL)
+\method{predict}{Forest}(object, xNew, maxTerms = NULL)
 }
 \arguments{
 \item{object}{object of the class Forest}

@@ -4,8 +4,16 @@
 \alias{FlexZBoost}
 \title{Fits FlexZBoost}
 \usage{
-FlexZBoost(xTrain, zTrain, xValidation, zValidation, xTest = NULL,
-  zTest = NULL, chooseSharpen = TRUE, ...)
+FlexZBoost(
+  xTrain,
+  zTrain,
+  xValidation,
+  zValidation,
+  xTest = NULL,
+  zTest = NULL,
+  chooseSharpen = TRUE,
+  ...
+)
 }
 \arguments{
 \item{xTrain}{Covariates x used to train the model (one observation per row)}

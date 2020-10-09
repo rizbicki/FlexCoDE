@@ -1,3 +1,4 @@
+
 box_transform <- function(z, z_min, z_max) {
   return((z - z_min) / (z_max - z_min))
 }

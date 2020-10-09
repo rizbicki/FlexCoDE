@@ -368,8 +368,8 @@ estimateError <- function(obj, x_test, z_test, se = TRUE, n_boot = 500,
 #'
 #' @example ../predict.R
 #'
+#' @export predict.FlexCoDE
 #' @export
-#'
 predict.FlexCoDE <- function(obj, xNew, B = NULL, predictionBandProb = FALSE, process = TRUE) {
   if (!is.matrix(xNew)) {
     xNew <- as.matrix(xNew)
@@ -429,7 +429,7 @@ predict.FlexCoDE <- function(obj, xNew, B = NULL, predictionBandProb = FALSE, pr
               th = th))
 }
 
-#' Print object of classe FlexCoDE
+#' Print object of class FlexCoDE
 #'
 #' @param objectCDE Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand
 #'
@@ -452,7 +452,7 @@ print.FlexCoDE=function(objectCDE)
   if(!is.null(objectCDE$estimatedRisk)) cat(paste("Estimated risk on test set: ",objectCDE$estimatedRisk$mean," (se: ",objectCDE$estimatedRisk$seBoot,")","\n",sep=""))
 
   cat("\n")
-  cat("####### Caracteristic of the fitted regression:\n\n")
+  cat("####### Caracteristics of the fitted regression:\n\n")
   print(objectCDE$regressionObject,bestI=objectCDE$bestI,nameCovariates=objectCDE$covariateNames)
 
 }
@@ -467,7 +467,7 @@ print.FlexCoDE=function(objectCDE)
 #' @param fontSize Font size of axis labels and legend
 #' @param lineWidth Line width of the curves to be ploted
 #' @param predictionBandProb Either a number indicating the probability for the highest predictive density region desired  or FALSE if bands are not desired. Default is FALSE
-#' @param lineWidthPred Line width of the prediction bands to be ploted
+#' @param lineWidthPred Line width of the prediction bands to be plotted
 #'
 #' @return Plot with estimated densities
 #'
@@ -477,6 +477,9 @@ print.FlexCoDE=function(objectCDE)
 #'
 plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),9),fontSize=12,lineWidth=1,predictionBandProb=FALSE,lineWidthPred=0.6)
 {
+  if(class(objectCDE)!="FlexCoDE")
+    stop("Object should be of class FlexCoDE")
+
   if(!is.matrix(xTest))
     xTest=as.matrix(xTest)
 
@@ -558,8 +561,6 @@ plot.FlexCoDE=function(objectCDE,xTest,zTest,nPlots=min(nrow(xTest),9),fontSize=
 }
 
 
-
-
 #' Plots examples of estimated densities together with real response
 #'
 #' @param objectCDE_binded Object of the class "FlexCoDE_binded", typically obtained using \code{\link{bindFlexCoDE}} beforehand
@@ -624,6 +625,7 @@ plot.FlexCoDE_binded=function(objectCDE_binded,xTest,zTest,nPlots=min(nrow(xTest
     ggplot2::theme(legend.direction = "horizontal",legend.position = "top",legend.title=ggplot2::element_text(size=16,face="bold"),legend.text=ggplot2::element_text(size=fontSize),axis.title=ggplot2::element_text(size=fontSize,face="bold"))
 
 }
+
 
 
 #' Binds together objects of the class "FlexCoDE"

@@ -4,8 +4,7 @@
 \alias{predict.FlexCoDEKernel}
 \title{Evaluates the estimated  density of new observations (testing points) of a "FlexCoDE" object}
 \usage{
-predict.FlexCoDEKernel(objectCDE, kernelNewTrain, B = 1000,
-  predictionBandProb = FALSE)
+\method{predict}{FlexCoDEKernel}(objectCDE, kernelNewTrain, B = 1000, predictionBandProb = FALSE)
 }
 \arguments{
 \item{objectCDE}{Object of the class "FlexCoDE", typically fitted used \code{\link{fitFlexCoDE}} beforehand}
@@ -24,6 +23,6 @@ The return value is an object with the following components
 Evaluates the estimated  density of new observations (testing points) of a "FlexCoDE" object
 }
 \examples{
-# See \\code{\\link{fitFlexCoDE}}
+# See \code{\link{fitFlexCoDE}}
 
 }

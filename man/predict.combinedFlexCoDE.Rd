@@ -4,8 +4,7 @@
 \alias{predict.combinedFlexCoDE}
 \title{Evaluates the estimated  density of new observations (testing points) of a "combinedFlexCoDE" object}
 \usage{
-predict.combinedFlexCoDE(objectCombined, xNew, B = 1000,
-  predictionBandProb = FALSE)
+\method{predict}{combinedFlexCoDE}(objectCombined, xNew, B = 1000, predictionBandProb = FALSE)
 }
 \arguments{
 \item{xNew}{Matrix with nTest rows and same number of columns as xTrain, containing x's for which the estimates are desired.}
@@ -25,5 +24,5 @@ The return value is an object with the following components
 Evaluates the estimated  density of new observations (testing points) of a "combinedFlexCoDE" object
 }
 \examples{
-# See \\code{\\link{combineFlexCoDE}}
+# See \code{\link{combineFlexCoDE}}
 }
