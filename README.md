@@ -92,7 +92,7 @@ in FlexZBoost: an exponent $\alpha$ that we use to sharpen the computed density 
 A simple example of fitting flexZBoost using the data generated above:
 
 ```R
-fit=flexZBoost(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
+fit=FlexZBoost(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
             nIMax = 30)
 fit$bestAlpha
 fit$estimatedRisk
