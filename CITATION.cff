@@ -1,0 +1,53 @@
+cff-version: 1.2.0
+message: >-
+  If you use FlexCoDE in your research, please cite the software using the
+  metadata below and cite the methodological paper listed under references.
+title: "FlexCoDE: Flexible Conditional Density Estimator in R"
+type: software
+authors:
+  - family-names: Izbicki
+    given-names: Rafael
+abstract: >-
+  FlexCoDE is an R implementation of flexible conditional density estimation
+  via regression. It expands a conditional density in an orthonormal basis and
+  estimates the expansion coefficients as conditional means, allowing standard
+  regression methods to be used for conditional density estimation. The package
+  also includes FlexZBoost, an XGBoost-based implementation designed for
+  scalable high-dimensional applications.
+version: "0.0.0.9000"
+license: GPL-2.0-only
+repository-code: "https://github.com/rizbicki/FlexCoDE"
+repository: "https://ascl.net/2607.028"
+url: "https://ascl.net/2607.028"
+identifiers:
+  - type: other
+    value: "ascl:2607.028"
+    description: "Astrophysics Source Code Library identifier"
+  - type: other
+    value: "2026ascl.soft07028I"
+    description: "ADS bibcode for the ASCL record"
+keywords:
+  - conditional density estimation
+  - nonparametric statistics
+  - regression
+  - machine learning
+  - astrophysics
+  - photometric redshift
+  - R
+references:
+  - type: article
+    authors:
+      - family-names: Izbicki
+        given-names: Rafael
+      - family-names: Lee
+        given-names: Ann B.
+    title: >-
+      Converting high-dimensional regression to high-dimensional conditional
+      density estimation
+    journal: Electronic Journal of Statistics
+    year: 2017
+    volume: 11
+    issue: 2
+    start: 2800
+    end: 2831
+    doi: "10.1214/17-EJS1302"
